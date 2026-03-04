@@ -98,15 +98,17 @@
             @input="onDistanceInput"
           />
         </label>
-        <input
-          class="distance-slider"
-          type="range"
-          min="0"
-          max="1000"
-          step="1"
-          :value="distanceSliderValue"
-          @input="onDistanceSlider"
-        />
+        <div class="slider-wrap" :style="{ '--fill-percent': distanceFillPercent + '%' }">
+          <input
+            class="distance-slider"
+            type="range"
+            min="0"
+            max="1000"
+            step="1"
+            :value="distanceSliderValue"
+            @input="onDistanceSlider"
+          />
+        </div>
       </div>
 
       <div class="map-details-card">
@@ -161,15 +163,17 @@
             @input="onMapShapeScaleInput"
           />
         </label>
-        <input
-          class="distance-slider"
-          type="range"
-          min="0.5"
-          max="1.5"
-          step="0.05"
-          :value="effectiveShapeScale"
-          @input="onMapShapeScaleInput"
-        />
+        <div class="slider-wrap" :style="{ '--fill-percent': shapeScaleFillPercent + '%' }">
+          <input
+            class="distance-slider"
+            type="range"
+            min="0.5"
+            max="1.5"
+            step="0.05"
+            :value="effectiveShapeScale"
+            @input="onMapShapeScaleInput"
+          />
+        </div>
       </div>
 
       <div class="distance-slider-block">
@@ -185,15 +189,17 @@
             @input="onRotationInput"
           />
         </label>
-        <input
-          class="distance-slider"
-          type="range"
-          min="-180"
-          max="180"
-          step="1"
-          :value="store.mapBearing"
-          @input="onRotationInput"
-        />
+        <div class="slider-wrap" :style="{ '--fill-percent': rotationFillPercent + '%' }">
+          <input
+            class="distance-slider"
+            type="range"
+            min="-180"
+            max="180"
+            step="1"
+            :value="store.mapBearing"
+            @input="onRotationInput"
+          />
+        </div>
       </div>
     </section>
 
@@ -246,15 +252,17 @@
             @input="onTextSpacingInput"
           />
         </label>
-        <input
-          class="distance-slider"
-          type="range"
-          min="0.5"
-          max="1.5"
-          step="0.05"
-          :value="store.textSpacing"
-          @input="onTextSpacingInput"
-        />
+        <div class="slider-wrap" :style="{ '--fill-percent': textSpacingFillPercent + '%' }">
+          <input
+            class="distance-slider"
+            type="range"
+            min="0.5"
+            max="1.5"
+            step="0.05"
+            :value="store.textSpacing"
+            @input="onTextSpacingInput"
+          />
+        </div>
       </div>
 
       <div class="map-details-card">
@@ -358,15 +366,17 @@
               @input="onPinSizeInput"
             />
           </label>
-          <input
-            class="distance-slider"
-            type="range"
-            :min="PIN_SIZE_MIN"
-            :max="PIN_SIZE_MAX"
-            step="1"
-            :value="store.pinSize"
-            @input="onPinSizeInput"
-          />
+          <div class="slider-wrap" :style="{ '--fill-percent': pinSizeFillPercent + '%' }">
+            <input
+              class="distance-slider"
+              type="range"
+              :min="PIN_SIZE_MIN"
+              :max="PIN_SIZE_MAX"
+              step="1"
+              :value="store.pinSize"
+              @input="onPinSizeInput"
+            />
+          </div>
         </div>
       </template>
     </section>
@@ -606,6 +616,25 @@ function sliderValueToDistance(sliderValue: number) {
 }
 
 const distanceSliderValue = computed(() => distanceToSliderValue(store.distance));
+
+const distanceFillPercent = computed(() => (distanceSliderValue.value / 1000) * 100);
+
+const shapeScaleFillPercent = computed(
+  () => ((effectiveShapeScale.value - 0.5) / 1) * 100,
+);
+
+const rotationFillPercent = computed(
+  () => ((store.mapBearing + 180) / 360) * 100,
+);
+
+const textSpacingFillPercent = computed(
+  () => ((store.textSpacing - 0.5) / 1) * 100,
+);
+
+const pinSizeFillPercent = computed(
+  () =>
+    ((store.pinSize - PIN_SIZE_MIN) / (PIN_SIZE_MAX - PIN_SIZE_MIN)) * 100,
+);
 
 function onDistanceSlider(event: Event) {
   const value = Number((event.target as HTMLInputElement).value);

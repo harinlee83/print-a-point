@@ -3,8 +3,8 @@
     <header class="create-header">
       <NuxtLink to="/" class="create-back" aria-label="Back to home">←</NuxtLink>
       <NuxtLink to="/" class="create-brand">
-        <img src="/icons/printapoint-icon-dark.svg" alt="PrintAPoint" />
-        <span>PrintAPoint</span>
+        <img src="/icons/logo.svg" alt="" />
+        <span class="create-brand-text">PRINTAPOINT</span>
       </NuxtLink>
       <div class="create-header-end"></div>
     </header>

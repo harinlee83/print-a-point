@@ -8,6 +8,9 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: "PrintAPoint",
+      link: [
+        { rel: "icon", type: "image/svg+xml", href: "/icons/favicon.svg" },
+      ],
       meta: [
         {
           name: "description",

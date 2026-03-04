@@ -1,10 +1,10 @@
 <template>
   <div class="home-shell">
     <header class="home-nav">
-      <div class="home-brand">
-        <img src="/icons/printapoint-icon-dark.svg" alt="PrintAPoint" />
-        <span>PrintAPoint</span>
-      </div>
+      <NuxtLink to="/" class="home-brand">
+        <img src="/icons/logo.svg" alt="" />
+        <span class="home-brand-text">PRINTAPOINT</span>
+      </NuxtLink>
     </header>
 
     <main class="home-main">
