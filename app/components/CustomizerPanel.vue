@@ -1,0 +1,415 @@
+<template>
+  <form class="settings-panel" @submit.prevent>
+    <section class="panel-block">
+      <h2>Location</h2>
+      <label>
+        Search place
+        <div class="location-autocomplete">
+          <div class="location-input-wrap">
+            <input
+              v-model="locationModel"
+              class="form-control-tall"
+              placeholder="Start typing a city or place"
+              autocomplete="off"
+              @focus="locationFocused = true"
+              @blur="handleLocationBlur"
+            />
+            <button
+              v-if="store.location.trim().length"
+              type="button"
+              class="location-clear-btn"
+              aria-label="Clear location"
+              @mousedown.prevent
+              @click="clearLocation"
+            >
+              x
+            </button>
+          </div>
+          <ul
+            v-if="locationFocused && locationSuggestions.length"
+            class="location-suggestions"
+            role="listbox"
+          >
+            <li v-for="suggestion in locationSuggestions" :key="suggestion.id">
+              <button
+                type="button"
+                class="location-suggestion"
+                @mousedown.prevent="selectLocation(suggestion)"
+              >
+                {{ suggestion.label }}
+              </button>
+            </li>
+            <li v-if="isLocationSearching" class="location-suggestion-status">
+              Searching...
+            </li>
+          </ul>
+        </div>
+      </label>
+
+      <div class="field-grid keep-two-mobile">
+        <label>
+          Latitude
+          <input
+            v-model.number="store.latitude"
+            class="form-control-tall"
+            type="number"
+            step="0.000001"
+            placeholder="52.374478"
+          />
+        </label>
+        <label>
+          Longitude
+          <input
+            v-model.number="store.longitude"
+            class="form-control-tall"
+            type="number"
+            step="0.000001"
+            placeholder="9.738553"
+          />
+        </label>
+      </div>
+    </section>
+
+    <section class="panel-block">
+      <h2>Map Settings</h2>
+      <label>
+        Theme
+        <select
+          v-model="themeModel"
+          class="form-control-tall"
+        >
+          <option v-for="themeOption in themeOptions" :key="themeOption.id" :value="themeOption.id">
+            {{ themeOption.name }}
+          </option>
+        </select>
+      </label>
+
+      <div class="distance-slider-block">
+        <label>
+          Distance (meters)
+          <input
+            :value="store.distance"
+            class="distance-slider-input"
+            type="number"
+            min="1000"
+            max="20000000"
+            step="100"
+            @input="onDistanceInput"
+          />
+        </label>
+        <input
+          class="distance-slider"
+          type="range"
+          min="0"
+          max="1000"
+          step="1"
+          :value="distanceSliderValue"
+          @input="onDistanceSlider"
+        />
+      </div>
+
+      <div class="map-details-card">
+        <label class="toggle-field">
+          <span>Show buildings</span>
+          <input v-model="store.includeBuildings" type="checkbox" />
+        </label>
+        <label class="toggle-field">
+          <span>Show water</span>
+          <input v-model="store.includeWater" type="checkbox" />
+        </label>
+        <label class="toggle-field">
+          <span>Show parks</span>
+          <input v-model="store.includeParks" type="checkbox" />
+        </label>
+      </div>
+    </section>
+
+    <section class="panel-block">
+      <div class="theme-color-header-row">
+        <h2>Theme Colors</h2>
+        <button type="button" class="ghost" @click="store.resetCustomColors()">
+          Reset
+        </button>
+      </div>
+      <div class="color-grid">
+        <label v-for="key in DISPLAY_PALETTE_KEYS" :key="key" class="color-input-row">
+          <span>{{ PALETTE_COLOR_LABELS[key] }}</span>
+          <input
+            type="color"
+            :value="resolveColor(key)"
+            @input="onColorInput(key, $event)"
+          />
+        </label>
+      </div>
+    </section>
+
+    <section class="panel-block">
+      <h2>Typography</h2>
+      <label class="toggle-field">
+        <span>Poster text</span>
+        <input v-model="store.showPosterText" type="checkbox" />
+      </label>
+      <div class="field-grid keep-two-mobile">
+        <label>
+          Display city
+          <input
+            v-model="store.displayCity"
+            class="form-control-tall"
+            placeholder="Hanover"
+          />
+        </label>
+        <label>
+          Display country
+          <input
+            v-model="store.displayCountry"
+            class="form-control-tall"
+            placeholder="Germany"
+          />
+        </label>
+      </div>
+      <label>
+        Font family
+        <select v-model="store.fontFamily" class="form-control-tall">
+          <option value="">Default (Space Grotesk)</option>
+          <option v-for="fontOption in fontOptions" :key="fontOption" :value="fontOption">
+            {{ fontOption }}
+          </option>
+        </select>
+      </label>
+    </section>
+
+    <section class="panel-block">
+      <h2>Map Pin</h2>
+      <label class="toggle-field">
+        <span>Show pin</span>
+        <input v-model="store.showPin" type="checkbox" />
+      </label>
+      <template v-if="store.showPin">
+        <div class="pin-style-grid">
+          <button
+            v-for="ps in PIN_STYLES"
+            :key="ps.id"
+            type="button"
+            :class="['pin-style-btn', { 'is-active': store.pinStyleId === ps.id }]"
+            :title="ps.label"
+            @click="store.setPinStyle(ps.id)"
+          >
+            <svg
+              class="pin-style-icon"
+              :viewBox="ps.viewBox.join(' ')"
+            >
+              <path :d="ps.path" fill="currentColor" />
+            </svg>
+          </button>
+        </div>
+        <label class="color-input-row">
+          <span>Pin color</span>
+          <input
+            type="color"
+            :value="store.effectivePinColor"
+            @input="onPinColorInput"
+          />
+        </label>
+        <div class="distance-slider-block">
+          <label>
+            Pin size
+            <input
+              :value="store.pinSize"
+              class="distance-slider-input"
+              type="number"
+              :min="PIN_SIZE_MIN"
+              :max="PIN_SIZE_MAX"
+              step="1"
+              @input="onPinSizeInput"
+            />
+          </label>
+          <input
+            class="distance-slider"
+            type="range"
+            :min="PIN_SIZE_MIN"
+            :max="PIN_SIZE_MAX"
+            step="1"
+            :value="store.pinSize"
+            @input="onPinSizeInput"
+          />
+        </div>
+      </template>
+    </section>
+
+    <SizeSelector
+      v-model="sizeModel"
+      :sizes="POSTER_SIZES"
+    />
+
+    <div class="action-row">
+      <button
+        type="button"
+        class="generate-btn"
+        :disabled="store.isExporting || store.isCheckoutLoading"
+        @click="$emit('buy')"
+      >
+        {{ buyButtonLabel }}
+      </button>
+      <p class="subtle-note">
+        Checkout and fulfillment are powered by Stripe and Printful.
+      </p>
+    </div>
+
+    <p v-if="store.error" class="error">{{ store.error }}</p>
+  </form>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import SizeSelector from "~/components/SizeSelector.vue";
+import { useLocationAutocomplete } from "~/composables/useLocationAutocomplete";
+import { useMapStore } from "~/stores/map";
+import { formatUsd, POSTER_SIZES, type PosterSizeId } from "~~/shared/posterSizes";
+import {
+  DISPLAY_PALETTE_KEYS,
+  PALETTE_COLOR_LABELS,
+} from "~/lib/theme/types";
+import { getThemeColorByPath } from "~/lib/theme/colorPaths";
+import { themeOptions } from "~/lib/theme/themeRepository";
+import { PIN_STYLES, PIN_SIZE_MIN, PIN_SIZE_MAX } from "~/lib/pin/pinStyles";
+import type { SearchResult } from "~/lib/location/nominatim";
+
+const emit = defineEmits<{
+  buy: [];
+  "location-selected": [lat: number, lon: number];
+}>();
+
+const store = useMapStore();
+const locationFocused = ref(false);
+
+const locationModel = computed({
+  get: () => store.location,
+  set: (value: string) => {
+    store.location = value;
+    const parts = value
+      .split(",")
+      .map((piece) => piece.trim())
+      .filter(Boolean);
+    if (parts[0]) {
+      store.displayCity = parts[0];
+    }
+    if (parts.length > 1) {
+      store.displayCountry = parts[parts.length - 1];
+    }
+  },
+});
+
+const { locationSuggestions, isLocationSearching } = useLocationAutocomplete(
+  locationModel,
+  locationFocused,
+);
+
+const themeModel = computed({
+  get: () => store.selectedThemeId,
+  set: (value: string) => store.setTheme(value),
+});
+
+const sizeModel = computed<PosterSizeId>({
+  get: () => store.selectedSizeId,
+  set: (value: PosterSizeId) => store.setSize(value),
+});
+
+const buyButtonLabel = computed(() => {
+  if (store.isCheckoutLoading) {
+    return "Preparing checkout...";
+  }
+  if (store.isExporting) {
+    return "Preparing your print...";
+  }
+
+  return `Buy Print - ${formatUsd(store.selectedSize.defaultPriceCents)}`;
+});
+
+const fontOptions = [
+  "Montserrat",
+  "Playfair Display",
+  "Oswald",
+  "Noto Sans JP",
+  "Source Sans Pro",
+  "Raleway",
+  "Lato",
+  "Merriweather",
+  "Bebas Neue",
+  "Poppins",
+  "Cormorant Garamond",
+];
+
+function resolveColor(key: string): string {
+  return (
+    store.customColors[key] ||
+    getThemeColorByPath(store.selectedThemeBase, key) ||
+    "#000000"
+  );
+}
+
+function onColorInput(key: string, event: Event) {
+  const value = (event.target as HTMLInputElement).value;
+  store.setCustomColor(key, value);
+}
+
+function handleLocationBlur() {
+  window.setTimeout(() => {
+    locationFocused.value = false;
+  }, 120);
+}
+
+function clearLocation() {
+  store.location = "";
+  store.displayCity = "";
+  store.displayCountry = "";
+}
+
+function selectLocation(suggestion: SearchResult) {
+  store.applyLocationResult(suggestion);
+  locationFocused.value = false;
+  emit("location-selected", suggestion.lat, suggestion.lon);
+}
+
+function distanceToSliderValue(distanceMeters: number) {
+  const minLog = Math.log(1000);
+  const maxLog = Math.log(20_000_000);
+  const ratio = (Math.log(Math.max(1000, Math.min(distanceMeters, 20_000_000))) - minLog) / (maxLog - minLog);
+  return Math.round(ratio * 1000);
+}
+
+function sliderValueToDistance(sliderValue: number) {
+  const minLog = Math.log(1000);
+  const maxLog = Math.log(20_000_000);
+  const ratio = sliderValue / 1000;
+  const distance = Math.exp(minLog + ratio * (maxLog - minLog));
+
+  if (distance < 100_000) return Math.round(distance / 100) * 100;
+  if (distance < 1_000_000) return Math.round(distance / 1_000) * 1_000;
+  if (distance < 10_000_000) return Math.round(distance / 10_000) * 10_000;
+  return Math.round(distance / 50_000) * 50_000;
+}
+
+const distanceSliderValue = computed(() => distanceToSliderValue(store.distance));
+
+function onDistanceSlider(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  if (!Number.isFinite(value)) return;
+  store.setDistance(sliderValueToDistance(value));
+}
+
+function onDistanceInput(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  if (!Number.isFinite(value)) return;
+  store.setDistance(value);
+}
+
+function onPinColorInput(event: Event) {
+  store.pinColor = (event.target as HTMLInputElement).value;
+}
+
+function onPinSizeInput(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  if (!Number.isFinite(value)) return;
+  store.setPinSize(value);
+}
+</script>
