@@ -2,7 +2,7 @@ import { applyFades } from "./layers";
 import { drawPin } from "./pin";
 import { drawPosterText } from "./typography";
 import type { ResolvedTheme } from "~/lib/theme/types";
-import { resolveMapShape } from "~/lib/shapes/mapShapes";
+import { getScaledCanvasClipPath } from "~/lib/shapes/mapShapes";
 
 export interface CompositeOptions {
   theme: ResolvedTheme;
@@ -19,6 +19,9 @@ export interface CompositeOptions {
   pinColor: string;
   pinSize: number;
   mapShape: string;
+  mapShapeScale: number;
+  mapShapeOffsetX: number;
+  mapShapeOffsetY: number;
   shapeBackgroundColor: string;
   textPresetId: string;
   displayCoordinates: string;
@@ -40,7 +43,6 @@ export function compositeExport(
     throw new Error("Canvas rendering is not available.");
   }
 
-  const shape = resolveMapShape(options.mapShape);
   const isNone = options.mapShape === "none";
 
   if (!isNone) {
@@ -49,10 +51,16 @@ export function compositeExport(
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Clip map to shape
+    // Clip map to scaled shape, apply offset
+    const scale = options.mapShapeScale ?? 1;
+    const dx = (width * (options.mapShapeOffsetX ?? 0)) / 100;
+    const dy = (height * (options.mapShapeOffsetY ?? 0)) / 100;
+
     ctx.save();
-    const clipPath = shape.canvasClipPath(width, height);
+    ctx.translate(dx, dy);
+    const clipPath = getScaledCanvasClipPath(options.mapShape, width, height, scale);
     ctx.clip(clipPath);
+    ctx.translate(-dx, -dy);
     ctx.drawImage(mapCanvas, 0, 0);
     ctx.restore();
   } else {

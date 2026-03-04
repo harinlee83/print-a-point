@@ -148,6 +148,30 @@
         />
       </label>
 
+      <div v-if="store.mapShape !== 'none'" class="distance-slider-block">
+        <label>
+          Map shape size
+          <input
+            :value="effectiveShapeScale"
+            class="distance-slider-input"
+            type="number"
+            min="0.5"
+            max="1.5"
+            step="0.05"
+            @input="onMapShapeScaleInput"
+          />
+        </label>
+        <input
+          class="distance-slider"
+          type="range"
+          min="0.5"
+          max="1.5"
+          step="0.05"
+          :value="effectiveShapeScale"
+          @input="onMapShapeScaleInput"
+        />
+      </div>
+
       <div class="distance-slider-block">
         <label>
           Rotation
@@ -423,6 +447,8 @@ const autoCoordinates = computed(() =>
   formatCoordinates(store.latitude, store.longitude),
 );
 
+const effectiveShapeScale = computed(() => store.mapShapeScale ?? 1);
+
 const fontOptions = [
   "Montserrat",
   "Playfair Display",
@@ -519,5 +545,11 @@ function onPinSizeInput(event: Event) {
   const value = Number((event.target as HTMLInputElement).value);
   if (!Number.isFinite(value)) return;
   store.setPinSize(value);
+}
+
+function onMapShapeScaleInput(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  if (!Number.isFinite(value)) return;
+  store.setMapShapeScale(value);
 }
 </script>

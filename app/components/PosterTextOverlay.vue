@@ -60,6 +60,7 @@ import {
   TEXT_DIVIDER_Y_RATIO,
   TEXT_COUNTRY_Y_RATIO,
   TEXT_COORDS_Y_RATIO,
+  TEXT_AREA_START_FIXED,
   CITY_TEXT_SHRINK_THRESHOLD,
   CITY_TEXT_SHRINK_THRESHOLD_LATIN,
   CITY_FONT_BASE_PX,
@@ -70,7 +71,6 @@ import {
   isLatinScript,
 } from "~/lib/export/textLayout";
 import { resolveTextPreset } from "~/lib/text/textPresets";
-import { resolveMapShape } from "~/lib/shapes/mapShapes";
 
 const props = defineProps<{
   city: string;
@@ -89,7 +89,6 @@ const props = defineProps<{
 }>();
 
 const preset = computed(() => resolveTextPreset(props.textPresetId));
-const shape = computed(() => resolveMapShape(props.mapShapeId));
 
 const isNoneShape = computed(() => props.mapShapeId === "none");
 
@@ -129,11 +128,10 @@ const coordsText = computed(() =>
     : formatCoordinates(props.lat, props.lon),
 );
 
-// For non-classic shapes, text goes below the shape
+// For non-none shapes, text goes below the shape. Use fixed start so text spacing stays consistent regardless of shape or shape size.
 const textAreaStart = computed(() => {
   if (isNoneShape.value) return 0;
-  const ratio = shape.value.shapeBottomRatio;
-  return ratio;
+  return TEXT_AREA_START_FIXED;
 });
 
 function computeYPercent(baseRatio: number): number {

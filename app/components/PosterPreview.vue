@@ -10,9 +10,12 @@
         }"
       >
         <div
+          ref="shapeContainerRef"
           class="map-shape-container"
+          :class="{ 'map-shape-container--draggable': isPositioningShape && !isNoneShape }"
           :style="{
             clipPath: computedClipPath,
+            transform: `translate(${store.mapShapeOffsetX}%, ${store.mapShapeOffsetY}%)`,
           }"
         >
           <ClientOnly>
@@ -20,7 +23,7 @@
               :style="store.mapStyle"
               :center="mapCenter"
               :zoom="mapZoom"
-              :interactive="isEditing"
+              :interactive="isEditingMap"
               :min-zoom="mapMinZoom"
               :max-zoom="mapMaxZoom"
               :overzoom-scale="MAP_OVERZOOM_SCALE"
@@ -31,6 +34,13 @@
           </ClientOnly>
           <GradientFades v-if="isNoneShape" :color="store.effectiveTheme.ui.bg" />
         </div>
+        <div
+          v-if="isPositioningShape && !isNoneShape"
+          ref="dragOverlayRef"
+          class="map-shape-drag-overlay"
+          aria-label="Drag to reposition shape"
+          @pointerdown="onShapeDragStart"
+        />
         <PosterPin
           :show="store.showPin"
           :style-id="store.pinStyleId"
@@ -63,14 +73,22 @@
         <div class="map-control-group">
           <button
             type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': !isEditing }]"
-            @click="isEditing ? handleFinishEditing() : handleStartEditing()"
+            :class="['map-control-btn', { 'map-control-btn--primary': isEditingMap }]"
+            @click="toggleEditMap"
           >
-            {{ isEditing ? 'Finish Editing' : 'Edit Map' }}
+            {{ isEditingMap ? 'Done' : 'Edit Map' }}
+          </button>
+          <button
+            v-if="!isNoneShape"
+            type="button"
+            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningShape }]"
+            @click="togglePositionShape"
+          >
+            {{ isPositioningShape ? 'Done' : 'Position Shape' }}
           </button>
         </div>
         <p class="map-control-hint">
-          {{ isEditing ? 'Drag to move, scroll or pinch to zoom.' : 'Map is locked to prevent unintended movement.' }}
+          {{ hintText }}
         </p>
       </div>
     </section>
@@ -88,7 +106,7 @@ import { useMapStore } from "~/stores/map";
 import { useMapSync } from "~/composables/useMapSync";
 import { MAP_BUTTON_ZOOM_DURATION_MS, MAP_OVERZOOM_SCALE } from "~/lib/map/constants";
 import { ensureGoogleFont } from "~/lib/utils/fonts";
-import { resolveMapShape } from "~/lib/shapes/mapShapes";
+import { resolveMapShape, getScaledCssClipPath } from "~/lib/shapes/mapShapes";
 
 const COUNTRY_VIEW_ZOOM_LEVEL = 10;
 const CONTINENT_VIEW_ZOOM_LEVEL = 6;
@@ -101,7 +119,10 @@ const store = useMapStore();
 
 const mapRef = ref<MapLibreMap | null>(null);
 const frameRef = ref<HTMLDivElement | null>(null);
-const isEditing = ref(false);
+const shapeContainerRef = ref<HTMLDivElement | null>(null);
+const dragOverlayRef = ref<HTMLDivElement | null>(null);
+const isEditingMap = ref(false);
+const isPositioningShape = ref(false);
 
 const {
   mapCenter,
@@ -151,28 +172,78 @@ const countryLabel = computed(() => {
 const frameWidth = ref(0);
 const frameHeight = ref(0);
 
+const effectiveShapeScale = computed(() => store.mapShapeScale ?? 1);
+
 const computedClipPath = computed(() => {
-  const shape = activeShape.value;
-  if (shape.cssClipPath === "none") return undefined;
-  // Heart needs dynamic path() to preserve aspect ratio on any poster size
-  if (shape.cssClipPath === "heart" && frameWidth.value > 0 && frameHeight.value > 0) {
-    return generateHeartCssPath(frameWidth.value, frameHeight.value);
+  if (store.mapShape === "none") return undefined;
+  if (frameWidth.value > 0 && frameHeight.value > 0) {
+    return getScaledCssClipPath(
+      store.mapShape,
+      frameWidth.value,
+      frameHeight.value,
+      effectiveShapeScale.value,
+    );
   }
-  return shape.cssClipPath;
+  return activeShape.value.cssClipPath;
 });
 
-function generateHeartCssPath(fw: number, fh: number): string {
-  // heart-icon.svg viewBox 0 0 122.88 107.41
-  const ar = 122.88 / 107.41;
-  const hw = fw * 0.84;
-  const hh = Math.min(hw / ar, fh * 0.60);
-  const finalW = hh * ar;
-  const ox = (fw - finalW) / 2;
-  const oy = fh * 0.10;
-  const sx = (x: number) => ox + (x / 122.88) * finalW;
-  const sy = (y: number) => oy + (y / 107.41) * hh;
+const hintText = computed(() => {
+  if (isEditingMap.value) {
+    return "Drag to move the map, scroll or pinch to zoom.";
+  }
+  if (isPositioningShape.value) {
+    return "Drag the shape to reposition it. The map stays fixed.";
+  }
+  return "Map is locked. Use Edit Map to pan/zoom, or Position Shape to move the mask.";
+});
 
-  return `path('M${sx(60.83)} ${sy(17.19)} C${sx(68.84)} ${sy(8.84)} ${sx(74.45)} ${sy(1.62)} ${sx(86.79)} ${sy(0.21)} C${sx(109.96)} ${sy(-2.45)} ${sx(131.27)} ${sy(21.27)} ${sx(119.57)} ${sy(44.62)} C${sx(116.24)} ${sy(51.27)} ${sx(109.46)} ${sy(59.18)} ${sx(101.96)} ${sy(66.94)} C${sx(93.73)} ${sy(75.46)} ${sx(84.62)} ${sy(83.81)} ${sx(78.24)} ${sy(90.14)} L${sx(60.84)} ${sy(107.40)} L${sx(46.46)} ${sy(93.56)} C${sx(29.16)} ${sy(76.9)} ${sx(0.95)} ${sy(55.93)} ${sx(0.02)} ${sy(29.95)} C${sx(-0.63)} ${sy(11.75)} ${sx(13.73)} ${sy(0.09)} ${sx(30.25)} ${sy(0.3)} C${sx(45.01)} ${sy(0.5)} ${sx(51.22)} ${sy(7.84)} ${sx(60.83)} ${sy(17.19)}Z')`;
+function toggleEditMap() {
+  if (isEditingMap.value) {
+    isEditingMap.value = false;
+  } else {
+    isPositioningShape.value = false;
+    isEditingMap.value = true;
+  }
+}
+
+function togglePositionShape() {
+  if (isPositioningShape.value) {
+    isPositioningShape.value = false;
+  } else {
+    isEditingMap.value = false;
+    isPositioningShape.value = true;
+  }
+}
+
+function onShapeDragStart(e: PointerEvent) {
+  e.preventDefault();
+  (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+  const frame = frameRef.value;
+  if (!frame) return;
+
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startOffsetX = store.mapShapeOffsetX;
+  const startOffsetY = store.mapShapeOffsetY;
+
+  const onMove = (moveE: PointerEvent) => {
+    const rect = frame.getBoundingClientRect();
+    const deltaX = ((moveE.clientX - startX) / rect.width) * 100;
+    const deltaY = ((moveE.clientY - startY) / rect.height) * 100;
+    store.setMapShapeOffset(startOffsetX + deltaX, startOffsetY + deltaY);
+  };
+
+  const onUp = () => {
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onUp);
+  };
+
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup", onUp);
+  document.addEventListener("pointercancel", onUp);
 }
 
 let resizeObserver: ResizeObserver | null = null;
@@ -226,13 +297,6 @@ const onMoveEnd = async (center: [number, number], zoom: number) => {
   await handleMoveEnd(center, zoom);
 };
 
-const handleStartEditing = () => {
-  isEditing.value = true;
-};
-
-const handleFinishEditing = () => {
-  isEditing.value = false;
-};
 
 watch(
   () => store.mapBearing,

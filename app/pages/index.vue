@@ -34,14 +34,10 @@
       </section>
 
     </main>
-
-    <FooterNote />
   </div>
 </template>
 
 <script setup lang="ts">
-import FooterNote from "~/components/FooterNote.vue";
-
 const galleryItems = [
   {
     src: "/gallery/tokyo_japanese_ink.jpg",

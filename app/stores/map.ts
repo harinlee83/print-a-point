@@ -41,6 +41,9 @@ export const useMapStore = defineStore("map", {
     displayCoordinates: "",
 
     mapShape: DEFAULT_MAP_SHAPE_ID,
+    mapShapeScale: 1,
+    mapShapeOffsetX: 0,
+    mapShapeOffsetY: 0,
     shapeBackgroundColor: "",
     mapBearing: 0,
     textPresetId: DEFAULT_TEXT_PRESET_ID,
@@ -178,6 +181,19 @@ export const useMapStore = defineStore("map", {
     setMapShape(shapeId: string) {
       if (!getMapShapeById(shapeId)) return;
       this.mapShape = shapeId;
+      this.mapShapeOffsetX = 0;
+      this.mapShapeOffsetY = 0;
+    },
+
+    setMapShapeScale(scale: number) {
+      if (!Number.isFinite(scale)) return;
+      this.mapShapeScale = Math.max(0.5, Math.min(1.5, scale));
+    },
+
+    setMapShapeOffset(x: number, y: number) {
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      this.mapShapeOffsetX = Math.max(-20, Math.min(20, x));
+      this.mapShapeOffsetY = Math.max(-20, Math.min(20, y));
     },
 
     setMapBearing(bearing: number) {

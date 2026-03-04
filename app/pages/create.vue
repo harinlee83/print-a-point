@@ -19,15 +19,12 @@
         @location-selected="handleLocationSelected"
       />
     </main>
-
-    <FooterNote />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 import type { Map as MapLibreMap } from "maplibre-gl";
-import FooterNote from "~/components/FooterNote.vue";
 import CustomizerPanel from "~/components/CustomizerPanel.vue";
 import PosterPreview from "~/components/PosterPreview.vue";
 import { useMapStore } from "~/stores/map";

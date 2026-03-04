@@ -538,6 +538,20 @@ button.ghost {
   overflow: hidden;
 }
 
+.map-shape-container--draggable {
+  cursor: move;
+}
+
+.map-shape-drag-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  cursor: move;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
 .poster-pin {
   position: absolute;
   pointer-events: none;

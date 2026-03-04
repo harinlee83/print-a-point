@@ -5,6 +5,7 @@ import {
   TEXT_DIVIDER_Y_RATIO,
   TEXT_COUNTRY_Y_RATIO,
   TEXT_COORDS_Y_RATIO,
+  TEXT_AREA_START_FIXED,
   CITY_TEXT_SHRINK_THRESHOLD,
   CITY_TEXT_SHRINK_THRESHOLD_LATIN,
   CITY_FONT_BASE_PX,
@@ -16,7 +17,6 @@ import {
 } from "./textLayout";
 import type { ResolvedTheme } from "~/lib/theme/types";
 import { resolveTextPreset } from "~/lib/text/textPresets";
-import { resolveMapShape } from "~/lib/shapes/mapShapes";
 
 export interface DrawTypographyInput {
   width: number;
@@ -61,7 +61,6 @@ export function drawPosterText(
   }
 
   const preset = resolveTextPreset(textPresetId);
-  const shape = resolveMapShape(mapShapeId);
   const isNone = mapShapeId === "none";
 
   const textColor = theme.ui.text || "#111111";
@@ -99,10 +98,10 @@ export function drawPosterText(
   const countryFontSize = COUNTRY_FONT_BASE_PX * preset.countrySizeScale * dimScale;
   const coordinateFontSize = COORDS_FONT_BASE_PX * preset.coordsSizeScale * dimScale;
 
-  // Compute Y positions
+  // Compute Y positions. Use fixed start so text spacing stays consistent regardless of shape or shape size.
   function computeY(baseRatio: number): number {
     if (isNone) return height * baseRatio;
-    const start = shape?.shapeBottomRatio ?? 1;
+    const start = TEXT_AREA_START_FIXED;
     const available = 1 - start;
     const normalT = (baseRatio - TEXT_CITY_Y_RATIO) / (TEXT_COORDS_Y_RATIO - TEXT_CITY_Y_RATIO);
     const padTop = available * 0.15;
