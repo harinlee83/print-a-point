@@ -125,6 +125,8 @@
           aria-label="Drag to reposition pin"
           @pointerdown="onPinDragStart"
         />
+        <div v-show="showGuideX" class="snap-guide snap-guide--vertical" />
+        <div v-show="showGuideY" class="snap-guide snap-guide--horizontal" />
         <p class="poster-watermark" :style="{ color: store.effectiveTheme.ui.text }">
           Made with printapoint.com
         </p>
@@ -145,6 +147,7 @@ import { useMapSync } from "~/composables/useMapSync";
 import { MAP_BUTTON_ZOOM_DURATION_MS, MAP_OVERZOOM_SCALE } from "~/lib/map/constants";
 import { ensureGoogleFont } from "~/lib/utils/fonts";
 import { resolveMapShape, getScaledCssClipPath } from "~/lib/shapes/mapShapes";
+import { snapToCenter } from "~/lib/utils/snap";
 
 const COUNTRY_VIEW_ZOOM_LEVEL = 10;
 const CONTINENT_VIEW_ZOOM_LEVEL = 6;
@@ -163,6 +166,8 @@ const isEditingMap = ref(false);
 const isPositioningShape = ref(false);
 const isPositioningText = ref(false);
 const isPositioningPin = ref(false);
+const showGuideX = ref(false);
+const showGuideY = ref(false);
 
 const {
   mapCenter,
@@ -303,10 +308,16 @@ function onShapeDragStart(e: PointerEvent) {
     const rect = frame.getBoundingClientRect();
     const deltaX = ((moveE.clientX - startX) / rect.width) * 100;
     const deltaY = ((moveE.clientY - startY) / rect.height) * 100;
-    store.setMapShapeOffset(startOffsetX + deltaX, startOffsetY + deltaY);
+    const snapX = snapToCenter(startOffsetX + deltaX);
+    const snapY = snapToCenter(startOffsetY + deltaY);
+    showGuideX.value = snapX.snapped;
+    showGuideY.value = snapY.snapped;
+    store.setMapShapeOffset(snapX.value, snapY.value);
   };
 
   const onUp = () => {
+    showGuideX.value = false;
+    showGuideY.value = false;
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     document.removeEventListener("pointermove", onMove);
     document.removeEventListener("pointerup", onUp);
@@ -334,10 +345,16 @@ function onTextDragStart(e: PointerEvent) {
     const rect = frame.getBoundingClientRect();
     const deltaX = ((moveE.clientX - startX) / rect.width) * 100;
     const deltaY = ((moveE.clientY - startY) / rect.height) * 100;
-    store.setTextOffset(startOffsetX + deltaX, startOffsetY + deltaY);
+    const snapX = snapToCenter(startOffsetX + deltaX);
+    const snapY = snapToCenter(startOffsetY + deltaY);
+    showGuideX.value = snapX.snapped;
+    showGuideY.value = snapY.snapped;
+    store.setTextOffset(snapX.value, snapY.value);
   };
 
   const onUp = () => {
+    showGuideX.value = false;
+    showGuideY.value = false;
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     document.removeEventListener("pointermove", onMove);
     document.removeEventListener("pointerup", onUp);
@@ -365,10 +382,16 @@ function onPinDragStart(e: PointerEvent) {
     const rect = frame.getBoundingClientRect();
     const deltaX = ((moveE.clientX - startX) / rect.width) * 100;
     const deltaY = ((moveE.clientY - startY) / rect.height) * 100;
-    store.setPinOffset(startOffsetX + deltaX, startOffsetY + deltaY);
+    const snapX = snapToCenter(startOffsetX + deltaX);
+    const snapY = snapToCenter(startOffsetY + deltaY);
+    showGuideX.value = snapX.snapped;
+    showGuideY.value = snapY.snapped;
+    store.setPinOffset(snapX.value, snapY.value);
   };
 
   const onUp = () => {
+    showGuideX.value = false;
+    showGuideY.value = false;
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     document.removeEventListener("pointermove", onMove);
     document.removeEventListener("pointerup", onUp);

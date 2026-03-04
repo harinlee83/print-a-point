@@ -860,6 +860,26 @@ button.ghost {
   touch-action: none;
 }
 
+.snap-guide {
+  position: absolute;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.snap-guide--vertical {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
+.snap-guide--horizontal {
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
 .poster-pin {
   position: absolute;
   pointer-events: none;
