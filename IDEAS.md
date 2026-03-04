@@ -1,10 +1,6 @@
-- i want the map shape size to be configurable using a slider
 - i want an export as PNG and SVG button
 - i want to make a note to user below the Buy print that says that the "Made with printapoint.com" mark will be REMOVED from the final print.
-- remove the "Map data © OpenStreetMap contributors · Tiles by OpenFreeMap and OpenMapTiles · Geocoding by Nominatim · Rendering with MapLibre" footer and instead create a simple FAQ section "below the sample gallery in the home page" and put that info there. also put other FAQs theres. make the Q&A be smooth expandable and collapsable panels. Also put info about stripe and printful there.
-- i also want a way for the user to drag and move the map shape around
-- i want a way for the user to drag and move the pin around.
-- the spacing between the text seems to far apart. i want that to be configurable.
+- remove the "Map data © OpenStreetMap contributors · Tiles by OpenFreeMap and OpenMapTiles · Geocoding by Nominatim · Rendering with MapLibre" footer  and instead create a simple FAQ section "below the sample gallery in the home page" and put that info there. also put other FAQs theres. make the Q&A be smooth expandable and collapsable panels. Also put info about stripe and printful there.
 - have the whole configuration to be shareable. just store state as query parameters or something. Then add a "Share this poster" button.
 - the title of the website should be "PrintAPoint". Tagline can be "Turn Coordinates into Art"
-- have a "preview" section that shows the map in a frame and in various settings like on a wall, in a frame, on a stand, etc. with side arrows to see it in different settings.
+- have a "Show preview" button in the /create page that shows the map in a frame and in various settings like on a wall, in a frame, on a stand, etc. with side arrows to swipe through to see it in different settings.

@@ -18,6 +18,8 @@ export interface CompositeOptions {
   pinStyleId: string;
   pinColor: string;
   pinSize: number;
+  pinOffsetX?: number;
+  pinOffsetY?: number;
   mapShape: string;
   mapShapeScale: number;
   mapShapeOffsetX: number;
@@ -25,6 +27,9 @@ export interface CompositeOptions {
   shapeBackgroundColor: string;
   textPresetId: string;
   displayCoordinates: string;
+  textSpacing?: number;
+  textOffsetX?: number;
+  textOffsetY?: number;
 }
 
 export function compositeExport(
@@ -75,6 +80,8 @@ export function compositeExport(
     pinStyleId: options.pinStyleId,
     pinColor: options.pinColor,
     pinSize: options.pinSize,
+    pinOffsetX: options.pinOffsetX ?? 0,
+    pinOffsetY: options.pinOffsetY ?? 0,
   });
 
   drawPosterText(ctx, {
@@ -92,6 +99,9 @@ export function compositeExport(
     textPresetId: options.textPresetId,
     mapShapeId: options.mapShape,
     displayCoordinates: options.displayCoordinates,
+    textSpacing: options.textSpacing ?? 1,
+    textOffsetX: options.textOffsetX ?? 0,
+    textOffsetY: options.textOffsetY ?? 0,
   });
 
   return canvas;

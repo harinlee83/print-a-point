@@ -46,21 +46,44 @@
           :style-id="store.pinStyleId"
           :color="store.effectivePinColor"
           :size="store.pinSize"
+          :offset-x="store.pinOffsetX"
+          :offset-y="store.pinOffsetY"
         />
-        <PosterTextOverlay
-          :city="cityLabel"
-          :country="countryLabel"
-          :lat="store.latitude"
-          :lon="store.longitude"
-          :font-family="store.fontFamily"
-          :text-color="store.effectiveTheme.ui.text"
-          :show-title="store.showTitle"
-          :show-divider="store.showDivider"
-          :show-subtitle="store.showSubtitle"
-          :show-coordinates="store.showCoordinates"
-          :text-preset-id="store.textPresetId"
-          :map-shape-id="store.mapShape"
-          :coordinates="store.displayCoordinates"
+        <div
+          class="poster-text-wrapper"
+          :class="{ 'poster-text-wrapper--draggable': isPositioningText }"
+          :style="{
+            transform: `translate(${store.textOffsetX}%, ${store.textOffsetY}%)`,
+          }"
+        >
+          <PosterTextOverlay
+            :city="cityLabel"
+            :country="countryLabel"
+            :lat="store.latitude"
+            :lon="store.longitude"
+            :font-family="store.fontFamily"
+            :text-color="store.effectiveTheme.ui.text"
+            :show-title="store.showTitle"
+            :show-divider="store.showDivider"
+            :show-subtitle="store.showSubtitle"
+            :show-coordinates="store.showCoordinates"
+            :text-preset-id="store.textPresetId"
+            :map-shape-id="store.mapShape"
+            :coordinates="store.displayCoordinates"
+            :text-spacing="store.textSpacing"
+          />
+        </div>
+        <div
+          v-if="isPositioningText && store.showAnyText"
+          class="map-shape-drag-overlay"
+          aria-label="Drag to reposition text"
+          @pointerdown="onTextDragStart"
+        />
+        <div
+          v-if="isPositioningPin && store.showPin"
+          class="map-shape-drag-overlay"
+          aria-label="Drag to reposition pin"
+          @pointerdown="onPinDragStart"
         />
         <p class="poster-watermark" :style="{ color: store.effectiveTheme.ui.text }">
           Made with printapoint.com
@@ -84,7 +107,23 @@
             :class="['map-control-btn', { 'map-control-btn--primary': isPositioningShape }]"
             @click="togglePositionShape"
           >
-            {{ isPositioningShape ? 'Done' : 'Position Shape' }}
+            {{ isPositioningShape ? 'Done' : 'Edit Map Shape Position' }}
+          </button>
+          <button
+            v-if="store.showAnyText"
+            type="button"
+            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningText }]"
+            @click="togglePositionText"
+          >
+            {{ isPositioningText ? 'Done' : 'Edit Text Position' }}
+          </button>
+          <button
+            v-if="store.showPin"
+            type="button"
+            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningPin }]"
+            @click="togglePositionPin"
+          >
+            {{ isPositioningPin ? 'Done' : 'Edit Pin Position' }}
           </button>
         </div>
         <p class="map-control-hint">
@@ -123,6 +162,8 @@ const shapeContainerRef = ref<HTMLDivElement | null>(null);
 const dragOverlayRef = ref<HTMLDivElement | null>(null);
 const isEditingMap = ref(false);
 const isPositioningShape = ref(false);
+const isPositioningText = ref(false);
+const isPositioningPin = ref(false);
 
 const {
   mapCenter,
@@ -194,7 +235,13 @@ const hintText = computed(() => {
   if (isPositioningShape.value) {
     return "Drag the shape to reposition it. The map stays fixed.";
   }
-  return "Map is locked. Use Edit Map to pan/zoom, or Position Shape to move the mask.";
+  if (isPositioningText.value) {
+    return "Drag to reposition the text block.";
+  }
+  if (isPositioningPin.value) {
+    return "Drag to reposition the pin.";
+  }
+  return "Map is locked. Use Edit Map to pan/zoom, Edit Map Shape Position to move the mask, Edit Text Position to move the text, or Edit Pin Position to move the pin.";
 });
 
 function toggleEditMap() {
@@ -202,6 +249,8 @@ function toggleEditMap() {
     isEditingMap.value = false;
   } else {
     isPositioningShape.value = false;
+    isPositioningText.value = false;
+    isPositioningPin.value = false;
     isEditingMap.value = true;
   }
 }
@@ -211,7 +260,31 @@ function togglePositionShape() {
     isPositioningShape.value = false;
   } else {
     isEditingMap.value = false;
+    isPositioningText.value = false;
+    isPositioningPin.value = false;
     isPositioningShape.value = true;
+  }
+}
+
+function togglePositionText() {
+  if (isPositioningText.value) {
+    isPositioningText.value = false;
+  } else {
+    isEditingMap.value = false;
+    isPositioningShape.value = false;
+    isPositioningPin.value = false;
+    isPositioningText.value = true;
+  }
+}
+
+function togglePositionPin() {
+  if (isPositioningPin.value) {
+    isPositioningPin.value = false;
+  } else {
+    isEditingMap.value = false;
+    isPositioningShape.value = false;
+    isPositioningText.value = false;
+    isPositioningPin.value = true;
   }
 }
 
@@ -232,6 +305,68 @@ function onShapeDragStart(e: PointerEvent) {
     const deltaX = ((moveE.clientX - startX) / rect.width) * 100;
     const deltaY = ((moveE.clientY - startY) / rect.height) * 100;
     store.setMapShapeOffset(startOffsetX + deltaX, startOffsetY + deltaY);
+  };
+
+  const onUp = () => {
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onUp);
+  };
+
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup", onUp);
+  document.addEventListener("pointercancel", onUp);
+}
+
+function onTextDragStart(e: PointerEvent) {
+  e.preventDefault();
+  (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+  const frame = frameRef.value;
+  if (!frame) return;
+
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startOffsetX = store.textOffsetX;
+  const startOffsetY = store.textOffsetY;
+
+  const onMove = (moveE: PointerEvent) => {
+    const rect = frame.getBoundingClientRect();
+    const deltaX = ((moveE.clientX - startX) / rect.width) * 100;
+    const deltaY = ((moveE.clientY - startY) / rect.height) * 100;
+    store.setTextOffset(startOffsetX + deltaX, startOffsetY + deltaY);
+  };
+
+  const onUp = () => {
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+    document.removeEventListener("pointercancel", onUp);
+  };
+
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup", onUp);
+  document.addEventListener("pointercancel", onUp);
+}
+
+function onPinDragStart(e: PointerEvent) {
+  e.preventDefault();
+  (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+  const frame = frameRef.value;
+  if (!frame) return;
+
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startOffsetX = store.pinOffsetX;
+  const startOffsetY = store.pinOffsetY;
+
+  const onMove = (moveE: PointerEvent) => {
+    const rect = frame.getBoundingClientRect();
+    const deltaX = ((moveE.clientX - startX) / rect.width) * 100;
+    const deltaY = ((moveE.clientY - startY) / rect.height) * 100;
+    store.setPinOffset(startOffsetX + deltaX, startOffsetY + deltaY);
   };
 
   const onUp = () => {
@@ -270,6 +405,15 @@ onUnmounted(() => {
     resizeObserver = null;
   }
 });
+
+watch(
+  () => store.showPin,
+  (showPin, prevShowPin) => {
+    if (showPin && !prevShowPin) {
+      store.setPinOffset(0, 0);
+    }
+  },
+);
 
 watch(
   () => store.fontFamily,

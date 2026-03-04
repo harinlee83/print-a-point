@@ -6,8 +6,8 @@
     :style="{
       width: widthCqmin,
       height: heightCqmin,
-      left: '50%',
-      top: '50%',
+      left: `${50 + (offsetX ?? 0)}%`,
+      top: `${50 + (offsetY ?? 0)}%`,
       transform: `translate(${anchorTranslateX}, ${anchorTranslateY})`,
       color: color,
     }"
@@ -30,6 +30,8 @@ const props = defineProps<{
   styleId: string;
   color: string;
   size: number;
+  offsetX?: number;
+  offsetY?: number;
 }>();
 
 const toCqMin = (px: number) => (px / TEXT_DIMENSION_REFERENCE_PX) * 100;

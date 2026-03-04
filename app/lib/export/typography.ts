@@ -5,7 +5,6 @@ import {
   TEXT_DIVIDER_Y_RATIO,
   TEXT_COUNTRY_Y_RATIO,
   TEXT_COORDS_Y_RATIO,
-  TEXT_AREA_START_FIXED,
   CITY_TEXT_SHRINK_THRESHOLD,
   CITY_TEXT_SHRINK_THRESHOLD_LATIN,
   CITY_FONT_BASE_PX,
@@ -33,6 +32,9 @@ export interface DrawTypographyInput {
   textPresetId: string;
   mapShapeId: string;
   displayCoordinates: string;
+  textSpacing?: number;
+  textOffsetX?: number;
+  textOffsetY?: number;
 }
 
 export function drawPosterText(
@@ -54,6 +56,9 @@ export function drawPosterText(
     textPresetId,
     mapShapeId,
     displayCoordinates,
+    textSpacing = 1,
+    textOffsetX = 0,
+    textOffsetY = 0,
   } = input;
 
   if (!showTitle && !showDivider && !showSubtitle && !showCoordinates) {
@@ -61,7 +66,6 @@ export function drawPosterText(
   }
 
   const preset = resolveTextPreset(textPresetId);
-  const isNone = mapShapeId === "none";
 
   const textColor = theme.ui.text || "#111111";
   const titleFontFamily = fontFamily
@@ -98,21 +102,32 @@ export function drawPosterText(
   const countryFontSize = COUNTRY_FONT_BASE_PX * preset.countrySizeScale * dimScale;
   const coordinateFontSize = COORDS_FONT_BASE_PX * preset.coordsSizeScale * dimScale;
 
-  // Compute Y positions. Use fixed start so text spacing stays consistent regardless of shape or shape size.
+  // Fixed positions for all shapes - text does not move when changing map shape.
+  // textSpacing (0.5-1.5) scales the gaps between lines.
   function computeY(baseRatio: number): number {
-    if (isNone) return height * baseRatio;
-    const start = TEXT_AREA_START_FIXED;
-    const available = 1 - start;
-    const normalT = (baseRatio - TEXT_CITY_Y_RATIO) / (TEXT_COORDS_Y_RATIO - TEXT_CITY_Y_RATIO);
-    const padTop = available * 0.15;
-    const usable = available * 0.7;
-    return height * (start + padTop + normalT * usable);
+    const cityBase = height * TEXT_CITY_Y_RATIO;
+    const gap1 = height * (TEXT_DIVIDER_Y_RATIO - TEXT_CITY_Y_RATIO) * textSpacing;
+    const gap2 = height * (TEXT_COUNTRY_Y_RATIO - TEXT_DIVIDER_Y_RATIO) * textSpacing;
+    const gap3 = height * (TEXT_COORDS_Y_RATIO - TEXT_COUNTRY_Y_RATIO) * textSpacing;
+
+    if (baseRatio <= TEXT_CITY_Y_RATIO) return cityBase;
+    if (baseRatio <= TEXT_DIVIDER_Y_RATIO) return cityBase + gap1;
+    if (baseRatio <= TEXT_COUNTRY_Y_RATIO) return cityBase + gap1 + gap2;
+    return cityBase + gap1 + gap2 + gap3;
   }
 
-  const cityY = computeY(TEXT_CITY_Y_RATIO);
-  const lineY = computeY(TEXT_DIVIDER_Y_RATIO);
-  const countryY = computeY(TEXT_COUNTRY_Y_RATIO);
-  const coordinatesY = computeY(TEXT_COORDS_Y_RATIO);
+  let cityY = computeY(TEXT_CITY_Y_RATIO);
+  let lineY = computeY(TEXT_DIVIDER_Y_RATIO);
+  let countryY = computeY(TEXT_COUNTRY_Y_RATIO);
+  let coordinatesY = computeY(TEXT_COORDS_Y_RATIO);
+
+  const offsetX = width * (textOffsetX / 100);
+  const offsetY = height * (textOffsetY / 100);
+  cityY += offsetY;
+  lineY += offsetY;
+  countryY += offsetY;
+  coordinatesY += offsetY;
+  const centerX = width * 0.5 + offsetX;
 
   ctx.fillStyle = textColor;
   ctx.textAlign = "center";
@@ -120,15 +135,15 @@ export function drawPosterText(
 
   if (showTitle) {
     ctx.font = `${preset.cityWeight} ${cityFontSize}px ${titleFontFamily}`;
-    ctx.fillText(cityLabel, width * 0.5, cityY);
+    ctx.fillText(cityLabel, centerX, cityY);
   }
 
   if (showDivider) {
     ctx.strokeStyle = textColor;
     ctx.lineWidth = 3 * dimScale;
     ctx.beginPath();
-    ctx.moveTo(width * 0.4, lineY);
-    ctx.lineTo(width * 0.6, lineY);
+    ctx.moveTo(centerX - width * 0.1, lineY);
+    ctx.lineTo(centerX + width * 0.1, lineY);
     ctx.stroke();
   }
 
@@ -137,7 +152,7 @@ export function drawPosterText(
       ? country.toUpperCase()
       : country;
     ctx.font = `${preset.countryWeight} ${countryFontSize}px ${titleFontFamily}`;
-    ctx.fillText(countryText, width * 0.5, countryY);
+    ctx.fillText(countryText, centerX, countryY);
   }
 
   if (showCoordinates) {
@@ -146,7 +161,7 @@ export function drawPosterText(
     const coordsText = displayCoordinates.trim()
       ? displayCoordinates.trim()
       : formatCoordinates(center.lat, center.lon);
-    ctx.fillText(coordsText, width * 0.5, coordinatesY);
+    ctx.fillText(coordsText, centerX, coordinatesY);
     ctx.globalAlpha = 1;
   }
 }

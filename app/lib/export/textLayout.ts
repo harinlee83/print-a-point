@@ -5,9 +5,6 @@ export const TEXT_DIVIDER_Y_RATIO = 0.875;
 export const TEXT_COUNTRY_Y_RATIO = 0.9;
 export const TEXT_COORDS_Y_RATIO = 0.93;
 
-/** Fixed ratio where text block starts for shaped maps. Keeps text spacing consistent regardless of shape or shape size. */
-export const TEXT_AREA_START_FIXED = 0.78;
-
 export const CITY_TEXT_SHRINK_THRESHOLD = 10;
 export const CITY_TEXT_SHRINK_THRESHOLD_LATIN = 20;
 

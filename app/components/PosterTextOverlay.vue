@@ -60,7 +60,6 @@ import {
   TEXT_DIVIDER_Y_RATIO,
   TEXT_COUNTRY_Y_RATIO,
   TEXT_COORDS_Y_RATIO,
-  TEXT_AREA_START_FIXED,
   CITY_TEXT_SHRINK_THRESHOLD,
   CITY_TEXT_SHRINK_THRESHOLD_LATIN,
   CITY_FONT_BASE_PX,
@@ -86,11 +85,10 @@ const props = defineProps<{
   textPresetId: string;
   mapShapeId: string;
   coordinates: string;
+  textSpacing?: number;
 }>();
 
 const preset = computed(() => resolveTextPreset(props.textPresetId));
-
-const isNoneShape = computed(() => props.mapShapeId === "none");
 
 const toCqMin = (px: number) => (px / TEXT_DIMENSION_REFERENCE_PX) * 100;
 
@@ -128,25 +126,22 @@ const coordsText = computed(() =>
     : formatCoordinates(props.lat, props.lon),
 );
 
-// For non-none shapes, text goes below the shape. Use fixed start so text spacing stays consistent regardless of shape or shape size.
-const textAreaStart = computed(() => {
-  if (isNoneShape.value) return 0;
-  return TEXT_AREA_START_FIXED;
-});
+// Fixed positions for all shapes - text does not move when changing map shape.
+// textSpacing (0.5-1.5) scales the gaps between lines. Default 1.
+const spacing = computed(() => props.textSpacing ?? 1);
 
 function computeYPercent(baseRatio: number): number {
-  if (isNoneShape.value) return baseRatio * 100;
-  // Map the text area (shapeBottomRatio..1) to the original ratios
-  const start = textAreaStart.value;
-  const available = 1 - start;
-  // Remap: original text occupies ~0.845..0.93, normalize to 0..1 then fill available
-  const textRangeStart = TEXT_CITY_Y_RATIO;
-  const textRangeEnd = TEXT_COORDS_Y_RATIO;
-  const normalT = (baseRatio - textRangeStart) / (textRangeEnd - textRangeStart);
-  // Add padding (10% of available at top, 15% at bottom)
-  const padTop = available * 0.15;
-  const usable = available * 0.7;
-  return (start + padTop + normalT * usable) * 100;
+  // Base: city 84.5%, divider 87.5%, country 90%, coords 93%
+  // Gaps: 3%, 2.5%, 3%. Scale gaps by textSpacing.
+  const cityBase = TEXT_CITY_Y_RATIO * 100;
+  const gap1 = (TEXT_DIVIDER_Y_RATIO - TEXT_CITY_Y_RATIO) * 100 * spacing.value;
+  const gap2 = (TEXT_COUNTRY_Y_RATIO - TEXT_DIVIDER_Y_RATIO) * 100 * spacing.value;
+  const gap3 = (TEXT_COORDS_Y_RATIO - TEXT_COUNTRY_Y_RATIO) * 100 * spacing.value;
+
+  if (baseRatio <= TEXT_CITY_Y_RATIO) return cityBase;
+  if (baseRatio <= TEXT_DIVIDER_Y_RATIO) return cityBase + gap1;
+  if (baseRatio <= TEXT_COUNTRY_Y_RATIO) return cityBase + gap1 + gap2;
+  return cityBase + gap1 + gap2 + gap3;
 }
 
 const cityYPercent = computed(() => computeYPercent(TEXT_CITY_Y_RATIO));

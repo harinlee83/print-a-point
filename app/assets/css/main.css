@@ -488,6 +488,16 @@ button.ghost {
   bottom: 0;
 }
 
+.poster-text-wrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.poster-text-wrapper--draggable {
+  cursor: move;
+}
+
 .poster-text-overlay {
   position: absolute;
   inset: 0;

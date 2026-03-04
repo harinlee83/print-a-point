@@ -12,6 +12,8 @@ export interface DrawPinInput {
   pinStyleId: string;
   pinColor: string;
   pinSize: number;
+  pinOffsetX?: number;
+  pinOffsetY?: number;
 }
 
 export function drawPin(
@@ -34,8 +36,11 @@ export function drawPin(
   const anchorFractionX = style.anchor[0] / style.viewBox[2];
   const anchorFractionY = style.anchor[1] / style.viewBox[3];
 
-  const x = width / 2 - anchorFractionX * pinWidth;
-  const y = height / 2 - anchorFractionY * pinHeight;
+  const offsetX = (input.pinOffsetX ?? 0) / 100 * width;
+  const offsetY = (input.pinOffsetY ?? 0) / 100 * height;
+
+  const x = width / 2 + offsetX - anchorFractionX * pinWidth;
+  const y = height / 2 + offsetY - anchorFractionY * pinHeight;
 
   const scaleX = pinWidth / style.viewBox[2];
   const scaleY = pinHeight / style.viewBox[3];

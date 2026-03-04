@@ -44,6 +44,8 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         pinStyleId: store.pinStyleId,
         pinColor: store.effectivePinColor,
         pinSize: store.pinSize,
+        pinOffsetX: store.pinOffsetX,
+        pinOffsetY: store.pinOffsetY,
         mapShape: store.mapShape,
         mapShapeScale: store.mapShapeScale,
         mapShapeOffsetX: store.mapShapeOffsetX,
@@ -51,6 +53,9 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         shapeBackgroundColor: store.shapeBackgroundColor,
         textPresetId: store.textPresetId,
         displayCoordinates: store.displayCoordinates,
+        textSpacing: store.textSpacing,
+        textOffsetX: store.textOffsetX,
+        textOffsetY: store.textOffsetY,
       });
 
       if (

@@ -47,11 +47,16 @@ export const useMapStore = defineStore("map", {
     shapeBackgroundColor: "",
     mapBearing: 0,
     textPresetId: DEFAULT_TEXT_PRESET_ID,
+    textSpacing: 1,
+    textOffsetX: 0,
+    textOffsetY: 0,
 
     showPin: false,
     pinStyleId: "classic",
     pinColor: "",
     pinSize: 50,
+    pinOffsetX: 0,
+    pinOffsetY: 0,
 
     includeBuildings: false,
     includeWater: true,
@@ -192,8 +197,8 @@ export const useMapStore = defineStore("map", {
 
     setMapShapeOffset(x: number, y: number) {
       if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-      this.mapShapeOffsetX = Math.max(-20, Math.min(20, x));
-      this.mapShapeOffsetY = Math.max(-20, Math.min(20, y));
+      this.mapShapeOffsetX = Math.max(-100, Math.min(100, x));
+      this.mapShapeOffsetY = Math.max(-100, Math.min(100, y));
     },
 
     setMapBearing(bearing: number) {
@@ -209,6 +214,17 @@ export const useMapStore = defineStore("map", {
       this.showDivider = preset.showDividerDefault;
     },
 
+    setTextSpacing(value: number) {
+      if (!Number.isFinite(value)) return;
+      this.textSpacing = Math.max(0.5, Math.min(1.5, value));
+    },
+
+    setTextOffset(x: number, y: number) {
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      this.textOffsetX = Math.max(-100, Math.min(100, x));
+      this.textOffsetY = Math.max(-100, Math.min(100, y));
+    },
+
     setPinStyle(styleId: string) {
       if (!getPinStyleById(styleId)) return;
       this.pinStyleId = styleId;
@@ -217,6 +233,12 @@ export const useMapStore = defineStore("map", {
     setPinSize(size: number) {
       if (!Number.isFinite(size)) return;
       this.pinSize = Math.max(PIN_SIZE_MIN, Math.min(Math.round(size), PIN_SIZE_MAX));
+    },
+
+    setPinOffset(x: number, y: number) {
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      this.pinOffsetX = Math.max(-100, Math.min(100, x));
+      this.pinOffsetY = Math.max(-100, Math.min(100, y));
     },
 
     setIsExporting(value: boolean) {

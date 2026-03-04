@@ -233,6 +233,30 @@
         </button>
       </div>
 
+      <div class="distance-slider-block">
+        <label>
+          Text spacing
+          <input
+            :value="store.textSpacing"
+            class="distance-slider-input"
+            type="number"
+            min="0.5"
+            max="1.5"
+            step="0.05"
+            @input="onTextSpacingInput"
+          />
+        </label>
+        <input
+          class="distance-slider"
+          type="range"
+          min="0.5"
+          max="1.5"
+          step="0.05"
+          :value="store.textSpacing"
+          @input="onTextSpacingInput"
+        />
+      </div>
+
       <div class="map-details-card">
         <label class="toggle-field">
           <span>Title</span>
@@ -551,5 +575,11 @@ function onMapShapeScaleInput(event: Event) {
   const value = Number((event.target as HTMLInputElement).value);
   if (!Number.isFinite(value)) return;
   store.setMapShapeScale(value);
+}
+
+function onTextSpacingInput(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  if (!Number.isFinite(value)) return;
+  store.setTextSpacing(value);
 }
 </script>
