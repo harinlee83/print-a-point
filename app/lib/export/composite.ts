@@ -30,6 +30,7 @@ export interface CompositeOptions {
   textSpacing?: number;
   textOffsetX?: number;
   textOffsetY?: number;
+  showWatermark?: boolean;
 }
 
 export function compositeExport(
@@ -103,6 +104,18 @@ export function compositeExport(
     textOffsetX: options.textOffsetX ?? 0,
     textOffsetY: options.textOffsetY ?? 0,
   });
+
+  if (options.showWatermark) {
+    const fontSize = Math.round(width * 0.016);
+    ctx.save();
+    ctx.font = `${fontSize}px "IBM Plex Mono", monospace`;
+    ctx.fillStyle = options.theme.ui.text;
+    ctx.globalAlpha = 0.4;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("Made with printapoint.com", width * 0.96, height * 0.97);
+    ctx.restore();
+  }
 
   return canvas;
 }

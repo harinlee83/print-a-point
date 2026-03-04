@@ -1,5 +1,45 @@
 <template>
   <section class="preview-panel">
+    <aside class="edit-controls-panel" aria-label="Map controls">
+      <div class="map-controls">
+        <div class="map-control-group">
+          <button
+            type="button"
+            :class="['map-control-btn', { 'map-control-btn--primary': isEditingMap }]"
+            @click="toggleEditMap"
+          >
+            {{ isEditingMap ? 'Done' : 'Edit Map' }}
+          </button>
+          <button
+            v-if="!isNoneShape"
+            type="button"
+            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningShape }]"
+            @click="togglePositionShape"
+          >
+            {{ isPositioningShape ? 'Done' : 'Edit Map Shape Position' }}
+          </button>
+          <button
+            v-if="store.showAnyText"
+            type="button"
+            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningText }]"
+            @click="togglePositionText"
+          >
+            {{ isPositioningText ? 'Done' : 'Edit Text Position' }}
+          </button>
+          <button
+            v-if="store.showPin"
+            type="button"
+            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningPin }]"
+            @click="togglePositionPin"
+          >
+            {{ isPositioningPin ? 'Done' : 'Edit Pin Position' }}
+          </button>
+        </div>
+        <p class="map-control-hint">
+          {{ hintText }}
+        </p>
+      </div>
+    </aside>
     <div class="poster-viewport">
       <div
         ref="frameRef"
@@ -90,47 +130,6 @@
         </p>
       </div>
     </div>
-
-    <section class="map-controls-section" aria-label="Map controls">
-      <div class="map-controls">
-        <div class="map-control-group">
-          <button
-            type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': isEditingMap }]"
-            @click="toggleEditMap"
-          >
-            {{ isEditingMap ? 'Done' : 'Edit Map' }}
-          </button>
-          <button
-            v-if="!isNoneShape"
-            type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningShape }]"
-            @click="togglePositionShape"
-          >
-            {{ isPositioningShape ? 'Done' : 'Edit Map Shape Position' }}
-          </button>
-          <button
-            v-if="store.showAnyText"
-            type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningText }]"
-            @click="togglePositionText"
-          >
-            {{ isPositioningText ? 'Done' : 'Edit Text Position' }}
-          </button>
-          <button
-            v-if="store.showPin"
-            type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningPin }]"
-            @click="togglePositionPin"
-          >
-            {{ isPositioningPin ? 'Done' : 'Edit Pin Position' }}
-          </button>
-        </div>
-        <p class="map-control-hint">
-          {{ hintText }}
-        </p>
-      </div>
-    </section>
   </section>
 </template>
 

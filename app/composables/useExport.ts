@@ -9,7 +9,7 @@ import { ensureGoogleFont } from "~/lib/utils/fonts";
 export function useExport(mapRef: Ref<MapLibreMap | null>) {
   const store = useMapStore();
 
-  const exportMapPng = async (): Promise<{ blob: Blob; filename: string }> => {
+  const exportMapPng = async (opts?: { showWatermark?: boolean }): Promise<{ blob: Blob; filename: string }> => {
     const map = mapRef.value;
     if (!map) {
       throw new Error("Map is not ready yet.");
@@ -56,6 +56,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         textSpacing: store.textSpacing,
         textOffsetX: store.textOffsetX,
         textOffsetY: store.textOffsetY,
+        showWatermark: opts?.showWatermark,
       });
 
       if (
@@ -89,7 +90,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     }
   };
 
-  const exportMapSvg = async (): Promise<{ blob: Blob; filename: string }> => {
+  const exportMapSvg = async (opts?: { showWatermark?: boolean }): Promise<{ blob: Blob; filename: string }> => {
     const map = mapRef.value;
     if (!map) {
       throw new Error("Map is not ready yet.");
@@ -136,6 +137,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         textSpacing: store.textSpacing,
         textOffsetX: store.textOffsetX,
         textOffsetY: store.textOffsetY,
+        showWatermark: opts?.showWatermark,
       });
 
       const dataUrl = finalCanvas.toDataURL("image/png");
@@ -156,7 +158,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
 
   const downloadPng = async () => {
     try {
-      const { blob, filename } = await exportMapPng();
+      const { blob, filename } = await exportMapPng({ showWatermark: true });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -170,7 +172,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
 
   const downloadSvg = async () => {
     try {
-      const { blob, filename } = await exportMapSvg();
+      const { blob, filename } = await exportMapSvg({ showWatermark: true });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

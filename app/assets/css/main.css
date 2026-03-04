@@ -35,7 +35,7 @@ a {
 .app-shell {
   width: min(1320px, 96vw);
   margin: 0 auto;
-  padding: 0.5rem 0 0.5rem;
+  padding: 0.5rem 0 1.2rem;
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -97,12 +97,13 @@ a {
 
 .app-grid {
   display: grid;
-  grid-template-columns: 1fr minmax(300px, 380px);
+  grid-template-columns: minmax(150px, 190px) 1fr minmax(300px, 380px);
   gap: 1rem;
-  align-items: stretch;
+  align-items: start;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  padding-top: 0.4rem;
 }
 
 .settings-panel {
@@ -110,6 +111,7 @@ a {
   flex-direction: column;
   max-height: 100%;
   overflow: hidden;
+  align-self: stretch;
 }
 
 .settings-scroll {
@@ -707,27 +709,33 @@ button.ghost {
 }
 
 .preview-panel {
-  border: 1px solid var(--line);
-  background: var(--bg);
-  border-radius: var(--radius);
-  padding: 0.8rem;
-  box-shadow: var(--shadow);
+  display: contents;
+}
+
+.edit-controls-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 0.8rem;
+  box-shadow: var(--shadow);
+  overflow-y: auto;
   max-height: 100%;
-  overflow: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
 
 .poster-viewport {
-  width: 100%;
+  min-width: 0;
   min-height: 0;
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 1.5rem 0;
+  align-self: stretch;
+  padding: 1rem 0;
 }
 
 .poster-frame {
@@ -948,13 +956,6 @@ button.ghost {
   letter-spacing: 0.04em;
 }
 
-.map-controls-section {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #eae6de;
-  padding: 0.6rem;
-}
-
 .map-controls {
   display: grid;
   gap: 0.6rem;
@@ -962,8 +963,8 @@ button.ghost {
 
 .map-control-group {
   display: flex;
+  flex-direction: column;
   gap: 0.45rem;
-  flex-wrap: wrap;
 }
 
 .map-control-btn {
@@ -1072,9 +1073,20 @@ button.ghost {
     overflow: visible;
   }
 
-  .preview-panel {
-    position: static;
+  .edit-controls-panel {
+    flex-direction: row;
+    flex-wrap: wrap;
     max-height: none;
+    overflow-y: visible;
+  }
+
+  .edit-controls-panel .map-control-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .edit-controls-panel .map-control-hint {
+    flex-basis: 100%;
   }
 
   .poster-frame {
