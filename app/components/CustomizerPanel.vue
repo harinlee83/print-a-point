@@ -389,11 +389,49 @@
           {{ buyButtonLabel }}
         </button>
         <p class="subtle-note">
+          The "Made with printapoint.com" mark will be REMOVED from the final print.
+        </p>
+        <p class="subtle-note">
           Checkout and fulfillment are powered by Stripe and Printful.
         </p>
       </div>
 
-      <p v-if="store.error" class="error">{{ store.error }}</p>
+      <div class="export-row">
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="store.isExporting"
+          @click="$emit('download-png')"
+        >
+          Download PNG
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="store.isExporting"
+          @click="$emit('download-svg')"
+        >
+          Download SVG
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          @click="$emit('share')"
+        >
+          Share this poster
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="store.isExporting"
+          @click="$emit('show-preview')"
+        >
+          Show preview
+        </button>
+      </div>
+
+      <p v-if="shareCopied" class="success-note">Link copied to clipboard!</p>
+      <p v-else-if="store.error" class="error">{{ store.error }}</p>
     </div>
   </form>
 </template>
@@ -416,9 +454,17 @@ import { TEXT_PRESETS } from "~/lib/text/textPresets";
 import { formatCoordinates } from "~/lib/location/coordinates";
 import type { SearchResult } from "~/lib/location/nominatim";
 
+defineProps<{
+  shareCopied?: boolean;
+}>();
+
 const emit = defineEmits<{
   buy: [];
   "location-selected": [lat: number, lon: number];
+  "download-png": [];
+  "download-svg": [];
+  share: [];
+  "show-preview": [];
 }>();
 
 const store = useMapStore();

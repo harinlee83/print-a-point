@@ -2,15 +2,15 @@
   <div class="home-shell">
     <header class="home-nav">
       <div class="home-brand">
-        <img src="/icons/printapoint-icon-dark.svg" alt="PrintaPoint" />
-        <span>Printa Point</span>
+        <img src="/icons/printapoint-icon-dark.svg" alt="PrintAPoint" />
+        <span>PrintAPoint</span>
       </div>
     </header>
 
     <main class="home-main">
       <section class="home-hero">
         <div class="home-hero-copy">
-          <h1>Your city, your style, printed.</h1>
+          <h1>Turn Coordinates into Art</h1>
           <p class="home-hero-subtext">design completely for free</p>
         </div>
 
@@ -31,6 +31,7 @@
           </div>
         </div>
 
+        <FaqSection />
       </section>
 
     </main>

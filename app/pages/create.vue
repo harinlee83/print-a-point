@@ -3,8 +3,8 @@
     <header class="create-header">
       <NuxtLink to="/" class="create-back" aria-label="Back to home">←</NuxtLink>
       <NuxtLink to="/" class="create-brand">
-        <img src="/icons/printapoint-icon-dark.svg" alt="PrintaPoint" />
-        <span>Printa Point</span>
+        <img src="/icons/printapoint-icon-dark.svg" alt="PrintAPoint" />
+        <span>PrintAPoint</span>
       </NuxtLink>
       <div class="create-header-end"></div>
     </header>
@@ -14,9 +14,19 @@
         ref="previewRef"
         @map-ready="onMapReady"
       />
+      <PreviewModal
+        :open="previewModalOpen"
+        :image-url="previewImageUrl"
+        @close="closePreviewModal"
+      />
       <CustomizerPanel
+        :share-copied="shareCopied"
         @buy="startCheckout"
         @location-selected="handleLocationSelected"
+        @download-png="handleDownloadPng"
+        @download-svg="handleDownloadSvg"
+        @share="handleShare"
+        @show-preview="openPreviewModal"
       />
     </main>
   </div>
@@ -27,17 +37,20 @@ import { onMounted, ref, watch } from "vue";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import CustomizerPanel from "~/components/CustomizerPanel.vue";
 import PosterPreview from "~/components/PosterPreview.vue";
+import PreviewModal from "~/components/PreviewModal.vue";
 import { useMapStore } from "~/stores/map";
 import { useExport } from "~/composables/useExport";
+import { useShareConfig } from "~/composables/useShareConfig";
 import { reverseGeocode, searchLocations } from "~/lib/location/nominatim";
 import { themeNames } from "~/lib/theme/themeRepository";
 
 const store = useMapStore();
 const route = useRoute();
+const { copyShareUrl, applyFromUrl } = useShareConfig();
 const previewRef = ref<InstanceType<typeof PosterPreview> | null>(null);
 const mapRef = ref<MapLibreMap | null>(null);
 
-const { exportMapPng } = useExport(mapRef);
+const { exportMapPng, downloadPng, downloadSvg } = useExport(mapRef);
 
 const onMapReady = (map: MapLibreMap) => {
   mapRef.value = map;
@@ -45,6 +58,50 @@ const onMapReady = (map: MapLibreMap) => {
 
 const handleLocationSelected = (lat: number, lon: number) => {
   previewRef.value?.flyTo(lat, lon);
+};
+
+const handleDownloadPng = () => {
+  void downloadPng();
+};
+
+const handleDownloadSvg = () => {
+  void downloadSvg();
+};
+
+const shareCopied = ref(false);
+const previewModalOpen = ref(false);
+const previewImageUrl = ref<string | null>(null);
+
+const openPreviewModal = async () => {
+  try {
+    const { blob } = await exportMapPng();
+    const url = URL.createObjectURL(blob);
+    previewImageUrl.value = url;
+    previewModalOpen.value = true;
+  } catch (err) {
+    store.setError(err instanceof Error ? err.message : "Could not generate preview.");
+  }
+};
+
+const closePreviewModal = () => {
+  previewModalOpen.value = false;
+  if (previewImageUrl.value) {
+    URL.revokeObjectURL(previewImageUrl.value);
+    previewImageUrl.value = null;
+  }
+};
+
+const handleShare = async () => {
+  const ok = await copyShareUrl();
+  if (ok) {
+    shareCopied.value = true;
+    store.clearError();
+    setTimeout(() => {
+      shareCopied.value = false;
+    }, 2000);
+  } else {
+    store.setError("Could not copy link. Please try again.");
+  }
 };
 
 const startCheckout = async () => {
@@ -95,6 +152,8 @@ const startCheckout = async () => {
 };
 
 async function applyQueryPreset() {
+  applyFromUrl();
+
   const theme = String(route.query.theme ?? "").trim();
   const city = String(route.query.city ?? "").trim();
 

@@ -5,6 +5,18 @@ export default defineNuxtConfig({
 
   modules: ["@pinia/nuxt"],
 
+  app: {
+    head: {
+      title: "PrintAPoint",
+      meta: [
+        {
+          name: "description",
+          content: "Turn Coordinates into Art. Create custom map posters from any location.",
+        },
+      ],
+    },
+  },
+
   css: ["~/assets/css/maplibre.css", "~/assets/css/main.css"],
 
   nitro: {
