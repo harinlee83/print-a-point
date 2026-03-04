@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@300;400;600&family=Space+Grotesk:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Dancing+Script:wght@400;700&family=IBM+Plex+Mono:wght@300;400;600&family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&family=Space+Grotesk:wght@400;500;700&display=swap");
 
 :root {
   --bg: #ece9e2;
@@ -92,30 +92,47 @@ a {
 }
 
 .settings-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.settings-scroll {
   display: grid;
   gap: 0.8rem;
   overflow-y: auto;
-  max-height: 100%;
+  flex: 1;
+  min-height: 0;
   padding-bottom: 0.5rem;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
 
-.settings-panel::-webkit-scrollbar {
+.settings-scroll::-webkit-scrollbar {
   width: 6px;
 }
 
-.settings-panel::-webkit-scrollbar-track {
+.settings-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.settings-panel::-webkit-scrollbar-thumb {
+.settings-scroll::-webkit-scrollbar-thumb {
   background: var(--line);
   border-radius: 3px;
 }
 
-.settings-panel::-webkit-scrollbar-thumb:hover {
+.settings-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
+}
+
+.settings-fixed {
+  display: grid;
+  gap: 0.8rem;
+  flex-shrink: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+  margin-top: 0.8rem;
 }
 
 .panel-block {
@@ -515,6 +532,12 @@ button.ghost {
   transform: translateY(-50%);
 }
 
+.map-shape-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
 .poster-pin {
   position: absolute;
   pointer-events: none;
@@ -546,6 +569,69 @@ button.ghost {
   width: 100%;
   height: 100%;
   color: var(--ink);
+}
+
+.shape-style-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.45rem;
+}
+
+.shape-style-btn {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.45rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+}
+
+.shape-style-btn.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.shape-style-icon {
+  width: 100%;
+  height: 100%;
+  color: var(--ink);
+}
+
+.text-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.45rem;
+}
+
+.text-preset-btn {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.5rem 0.3rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  gap: 0.2rem;
+}
+
+.text-preset-btn.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.text-preset-preview {
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.text-preset-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .map-controls-section {
@@ -679,6 +765,16 @@ button.ghost {
   .settings-panel {
     max-height: none;
     overflow: visible;
+  }
+
+  .settings-scroll {
+    overflow: visible;
+  }
+
+  .settings-fixed {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
   }
 
   .size-grid {
@@ -851,6 +947,17 @@ button.ghost {
   line-height: 1.25;
   letter-spacing: 0.005em;
   color: var(--ink);
+}
+
+.home-hero-subtext {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  opacity: 0.45;
+  text-transform: lowercase;
 }
 
 /* ── CTA ── */

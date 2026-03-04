@@ -1,5 +1,6 @@
 <template>
   <form class="settings-panel" @submit.prevent>
+    <div class="settings-scroll">
     <section class="panel-block">
       <h2>Location</h2>
       <label>
@@ -122,6 +123,54 @@
           <input v-model="store.includeParks" type="checkbox" />
         </label>
       </div>
+
+      <label>Map shape</label>
+      <div class="shape-style-grid">
+        <button
+          v-for="ms in MAP_SHAPES"
+          :key="ms.id"
+          type="button"
+          :class="['shape-style-btn', { 'is-active': store.mapShape === ms.id }]"
+          :title="ms.label"
+          @click="store.setMapShape(ms.id)"
+        >
+          <svg class="shape-style-icon" viewBox="0 0 24 24">
+            <path :d="ms.iconPath" fill="currentColor" />
+          </svg>
+        </button>
+      </div>
+      <label v-if="store.mapShape !== 'none'" class="color-input-row">
+        <span>Background color</span>
+        <input
+          type="color"
+          :value="store.shapeBackgroundColor || store.effectiveTheme.ui.bg"
+          @input="onShapeBgColorInput"
+        />
+      </label>
+
+      <div class="distance-slider-block">
+        <label>
+          Rotation
+          <input
+            :value="store.mapBearing"
+            class="distance-slider-input"
+            type="number"
+            min="-180"
+            max="180"
+            step="1"
+            @input="onRotationInput"
+          />
+        </label>
+        <input
+          class="distance-slider"
+          type="range"
+          min="-180"
+          max="180"
+          step="1"
+          :value="store.mapBearing"
+          @input="onRotationInput"
+        />
+      </div>
     </section>
 
     <section class="panel-block">
@@ -145,10 +194,40 @@
 
     <section class="panel-block">
       <h2>Typography</h2>
-      <label class="toggle-field">
-        <span>Poster text</span>
-        <input v-model="store.showPosterText" type="checkbox" />
-      </label>
+
+      <label>Text style</label>
+      <div class="text-preset-grid">
+        <button
+          v-for="tp in TEXT_PRESETS"
+          :key="tp.id"
+          type="button"
+          :class="['text-preset-btn', { 'is-active': store.textPresetId === tp.id }]"
+          @click="store.setTextPreset(tp.id)"
+        >
+          <span class="text-preset-preview" :style="{ fontFamily: tp.fontFamily ? `'${tp.fontFamily}', serif` : `'Space Grotesk', sans-serif` }">Aa</span>
+          <span class="text-preset-label">{{ tp.label }}</span>
+        </button>
+      </div>
+
+      <div class="map-details-card">
+        <label class="toggle-field">
+          <span>Title</span>
+          <input v-model="store.showTitle" type="checkbox" />
+        </label>
+        <label class="toggle-field">
+          <span>Divider</span>
+          <input v-model="store.showDivider" type="checkbox" />
+        </label>
+        <label class="toggle-field">
+          <span>Subtitle</span>
+          <input v-model="store.showSubtitle" type="checkbox" />
+        </label>
+        <label class="toggle-field">
+          <span>Coordinates</span>
+          <input v-model="store.showCoordinates" type="checkbox" />
+        </label>
+      </div>
+
       <div class="field-grid keep-two-mobile">
         <label>
           Display city
@@ -167,6 +246,14 @@
           />
         </label>
       </div>
+      <label v-if="store.showCoordinates">
+        Display coordinates
+        <input
+          v-model="store.displayCoordinates"
+          class="form-control-tall"
+          :placeholder="autoCoordinates"
+        />
+      </label>
       <label>
         Font family
         <select v-model="store.fontFamily" class="form-control-tall">
@@ -236,26 +323,30 @@
       </template>
     </section>
 
-    <SizeSelector
-      v-model="sizeModel"
-      :sizes="POSTER_SIZES"
-    />
-
-    <div class="action-row">
-      <button
-        type="button"
-        class="generate-btn"
-        :disabled="store.isExporting || store.isCheckoutLoading"
-        @click="$emit('buy')"
-      >
-        {{ buyButtonLabel }}
-      </button>
-      <p class="subtle-note">
-        Checkout and fulfillment are powered by Stripe and Printful.
-      </p>
     </div>
 
-    <p v-if="store.error" class="error">{{ store.error }}</p>
+    <div class="settings-fixed">
+      <SizeSelector
+        v-model="sizeModel"
+        :sizes="POSTER_SIZES"
+      />
+
+      <div class="action-row">
+        <button
+          type="button"
+          class="generate-btn"
+          :disabled="store.isExporting || store.isCheckoutLoading"
+          @click="$emit('buy')"
+        >
+          {{ buyButtonLabel }}
+        </button>
+        <p class="subtle-note">
+          Checkout and fulfillment are powered by Stripe and Printful.
+        </p>
+      </div>
+
+      <p v-if="store.error" class="error">{{ store.error }}</p>
+    </div>
   </form>
 </template>
 
@@ -272,6 +363,9 @@ import {
 import { getThemeColorByPath } from "~/lib/theme/colorPaths";
 import { themeOptions } from "~/lib/theme/themeRepository";
 import { PIN_STYLES, PIN_SIZE_MIN, PIN_SIZE_MAX } from "~/lib/pin/pinStyles";
+import { MAP_SHAPES } from "~/lib/shapes/mapShapes";
+import { TEXT_PRESETS } from "~/lib/text/textPresets";
+import { formatCoordinates } from "~/lib/location/coordinates";
 import type { SearchResult } from "~/lib/location/nominatim";
 
 const emit = defineEmits<{
@@ -324,6 +418,10 @@ const buyButtonLabel = computed(() => {
 
   return `Buy Print - ${formatUsd(store.selectedSize.defaultPriceCents)}`;
 });
+
+const autoCoordinates = computed(() =>
+  formatCoordinates(store.latitude, store.longitude),
+);
 
 const fontOptions = [
   "Montserrat",
@@ -401,6 +499,16 @@ function onDistanceInput(event: Event) {
   const value = Number((event.target as HTMLInputElement).value);
   if (!Number.isFinite(value)) return;
   store.setDistance(value);
+}
+
+function onShapeBgColorInput(event: Event) {
+  store.shapeBackgroundColor = (event.target as HTMLInputElement).value;
+}
+
+function onRotationInput(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value);
+  if (!Number.isFinite(value)) return;
+  store.setMapBearing(value);
 }
 
 function onPinColorInput(event: Event) {

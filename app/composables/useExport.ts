@@ -19,7 +19,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     store.clearError();
 
     try {
-      if (store.showPosterText && store.fontFamily.trim()) {
+      if (store.showAnyText && store.fontFamily.trim()) {
         await ensureGoogleFont(store.fontFamily.trim());
       }
 
@@ -36,11 +36,18 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         displayCity: store.displayCity || store.location,
         displayCountry: store.displayCountry,
         fontFamily: store.fontFamily,
-        showPosterText: store.showPosterText,
+        showTitle: store.showTitle,
+        showDivider: store.showDivider,
+        showSubtitle: store.showSubtitle,
+        showCoordinates: store.showCoordinates,
         showPin: store.showPin,
         pinStyleId: store.pinStyleId,
         pinColor: store.effectivePinColor,
         pinSize: store.pinSize,
+        mapShape: store.mapShape,
+        shapeBackgroundColor: store.shapeBackgroundColor,
+        textPresetId: store.textPresetId,
+        displayCoordinates: store.displayCoordinates,
       });
 
       if (

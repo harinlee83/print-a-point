@@ -6,25 +6,31 @@
         class="poster-frame"
         :style="{
           '--poster-aspect': `${store.aspectRatio}`,
-          '--poster-bg': store.effectiveTheme.ui.bg,
+          '--poster-bg': posterBgColor,
         }"
       >
-        <ClientOnly>
-          <MapCanvas
-            :style="store.mapStyle"
-            :center="mapCenter"
-            :zoom="mapZoom"
-            :interactive="isEditing"
-            :allow-rotation="isEditing && isRotationEnabled"
-            :min-zoom="mapMinZoom"
-            :max-zoom="mapMaxZoom"
-            :overzoom-scale="MAP_OVERZOOM_SCALE"
-            @ready="onMapReady"
-            @move="onMove"
-            @moveend="onMoveEnd"
-          />
-        </ClientOnly>
-        <GradientFades :color="store.effectiveTheme.ui.bg" />
+        <div
+          class="map-shape-container"
+          :style="{
+            clipPath: computedClipPath,
+          }"
+        >
+          <ClientOnly>
+            <MapCanvas
+              :style="store.mapStyle"
+              :center="mapCenter"
+              :zoom="mapZoom"
+              :interactive="isEditing"
+              :min-zoom="mapMinZoom"
+              :max-zoom="mapMaxZoom"
+              :overzoom-scale="MAP_OVERZOOM_SCALE"
+              @ready="onMapReady"
+              @move="onMove"
+              @moveend="onMoveEnd"
+            />
+          </ClientOnly>
+          <GradientFades v-if="isNoneShape" :color="store.effectiveTheme.ui.bg" />
+        </div>
         <PosterPin
           :show="store.showPin"
           :style-id="store.pinStyleId"
@@ -38,7 +44,13 @@
           :lon="store.longitude"
           :font-family="store.fontFamily"
           :text-color="store.effectiveTheme.ui.text"
-          :show-poster-text="store.showPosterText"
+          :show-title="store.showTitle"
+          :show-divider="store.showDivider"
+          :show-subtitle="store.showSubtitle"
+          :show-coordinates="store.showCoordinates"
+          :text-preset-id="store.textPresetId"
+          :map-shape-id="store.mapShape"
+          :coordinates="store.displayCoordinates"
         />
         <p class="poster-watermark" :style="{ color: store.effectiveTheme.ui.text }">
           Made with printapoint.com
@@ -48,91 +60,18 @@
 
     <section class="map-controls-section" aria-label="Map controls">
       <div class="map-controls">
-        <template v-if="!isEditing">
-          <div class="map-control-group">
-            <button type="button" class="map-control-btn" @click="handleRecenter">
-              Recenter
-            </button>
-            <button
-              type="button"
-              class="map-control-btn map-control-btn--primary"
-              @click="handleStartEditing"
-            >
-              Edit Map
-            </button>
-          </div>
-          <p class="map-control-hint">Map is locked to prevent unintended movement.</p>
-        </template>
-
-        <template v-else>
-          <div class="map-control-group">
-            <button type="button" class="map-control-btn" @click="handleRecenter">
-              Recenter
-            </button>
-            <button
-              type="button"
-              class="map-control-btn map-control-btn--primary"
-              @click="handleFinishEditing"
-            >
-              Finish
-            </button>
-            <button
-              type="button"
-              :class="['map-control-btn', { 'is-active': isRotationEnabled }]"
-              @click="isRotationEnabled = !isRotationEnabled"
-            >
-              {{ isRotationEnabled ? 'Disable Rotation' : 'Enable Rotation' }}
-            </button>
-          </div>
-          <p class="map-control-hint">
-            Drag to move and scroll or pinch to zoom. Use keyboard arrows to pan and +/- to zoom.
-          </p>
-          <div class="map-control-group map-control-slider-row">
-            <button type="button" class="map-control-btn" @click="handleZoomOut">
-              -
-            </button>
-            <input
-              class="map-control-slider"
-              type="range"
-              :min="mapMinZoom"
-              :max="mapMaxZoom"
-              :step="0.1"
-              :value="mapZoom"
-              aria-label="Zoom level"
-              @input="handleZoomSlider"
-            />
-            <button type="button" class="map-control-btn" @click="handleZoomIn">
-              +
-            </button>
-          </div>
-
-          <div v-if="isRotationEnabled" class="map-control-group map-control-slider-row">
-            <button
-              type="button"
-              class="map-control-btn"
-              @click="handleRotateBy(-15)"
-            >
-              Left
-            </button>
-            <input
-              class="map-control-slider"
-              type="range"
-              min="-180"
-              max="180"
-              step="15"
-              :value="Math.round(mapBearing / 15) * 15"
-              aria-label="Rotation angle"
-              @input="handleRotationSlider"
-            />
-            <button
-              type="button"
-              class="map-control-btn"
-              @click="handleRotateBy(15)"
-            >
-              Right
-            </button>
-          </div>
-        </template>
+        <div class="map-control-group">
+          <button
+            type="button"
+            :class="['map-control-btn', { 'map-control-btn--primary': !isEditing }]"
+            @click="isEditing ? handleFinishEditing() : handleStartEditing()"
+          >
+            {{ isEditing ? 'Finish Editing' : 'Edit Map' }}
+          </button>
+        </div>
+        <p class="map-control-hint">
+          {{ isEditing ? 'Drag to move, scroll or pinch to zoom.' : 'Map is locked to prevent unintended movement.' }}
+        </p>
       </div>
     </section>
   </section>
@@ -145,10 +84,11 @@ import MapCanvas from "~/components/MapCanvas.vue";
 import GradientFades from "~/components/GradientFades.vue";
 import PosterPin from "~/components/PosterPin.vue";
 import PosterTextOverlay from "~/components/PosterTextOverlay.vue";
-import { useMapStore, DEFAULT_LAT, DEFAULT_LOCATION_LABEL, DEFAULT_LON } from "~/stores/map";
+import { useMapStore } from "~/stores/map";
 import { useMapSync } from "~/composables/useMapSync";
-import { MAP_BUTTON_ZOOM_DURATION_MS, MAP_BUTTON_ZOOM_STEP, MAP_OVERZOOM_SCALE } from "~/lib/map/constants";
+import { MAP_BUTTON_ZOOM_DURATION_MS, MAP_OVERZOOM_SCALE } from "~/lib/map/constants";
 import { ensureGoogleFont } from "~/lib/utils/fonts";
+import { resolveMapShape } from "~/lib/shapes/mapShapes";
 
 const COUNTRY_VIEW_ZOOM_LEVEL = 10;
 const CONTINENT_VIEW_ZOOM_LEVEL = 6;
@@ -162,9 +102,6 @@ const store = useMapStore();
 const mapRef = ref<MapLibreMap | null>(null);
 const frameRef = ref<HTMLDivElement | null>(null);
 const isEditing = ref(false);
-const isRotationEnabled = ref(false);
-const mapBearing = ref(0);
-const savedCenter = ref<{ lat: number; lon: number } | null>(null);
 
 const {
   mapCenter,
@@ -176,6 +113,15 @@ const {
   flyToLocation,
   setContainerWidth,
 } = useMapSync(mapRef);
+
+const activeShape = computed(() => resolveMapShape(store.mapShape));
+const isNoneShape = computed(() => store.mapShape === "none");
+const posterBgColor = computed(() => {
+  if (!isNoneShape.value && store.shapeBackgroundColor) {
+    return store.shapeBackgroundColor;
+  }
+  return store.effectiveTheme.ui.bg;
+});
 
 const isCityCountryView = computed(() => mapZoom.value >= COUNTRY_VIEW_ZOOM_LEVEL);
 const isCountryContinentView = computed(
@@ -202,16 +148,46 @@ const countryLabel = computed(() => {
   return "Earth";
 });
 
+const frameWidth = ref(0);
+const frameHeight = ref(0);
+
+const computedClipPath = computed(() => {
+  const shape = activeShape.value;
+  if (shape.cssClipPath === "none") return undefined;
+  // Heart needs dynamic path() to preserve aspect ratio on any poster size
+  if (shape.cssClipPath === "heart" && frameWidth.value > 0 && frameHeight.value > 0) {
+    return generateHeartCssPath(frameWidth.value, frameHeight.value);
+  }
+  return shape.cssClipPath;
+});
+
+function generateHeartCssPath(fw: number, fh: number): string {
+  // heart-icon.svg viewBox 0 0 122.88 107.41
+  const ar = 122.88 / 107.41;
+  const hw = fw * 0.84;
+  const hh = Math.min(hw / ar, fh * 0.60);
+  const finalW = hh * ar;
+  const ox = (fw - finalW) / 2;
+  const oy = fh * 0.10;
+  const sx = (x: number) => ox + (x / 122.88) * finalW;
+  const sy = (y: number) => oy + (y / 107.41) * hh;
+
+  return `path('M${sx(60.83)} ${sy(17.19)} C${sx(68.84)} ${sy(8.84)} ${sx(74.45)} ${sy(1.62)} ${sx(86.79)} ${sy(0.21)} C${sx(109.96)} ${sy(-2.45)} ${sx(131.27)} ${sy(21.27)} ${sx(119.57)} ${sy(44.62)} C${sx(116.24)} ${sy(51.27)} ${sx(109.46)} ${sy(59.18)} ${sx(101.96)} ${sy(66.94)} C${sx(93.73)} ${sy(75.46)} ${sx(84.62)} ${sy(83.81)} ${sx(78.24)} ${sy(90.14)} L${sx(60.84)} ${sy(107.40)} L${sx(46.46)} ${sy(93.56)} C${sx(29.16)} ${sy(76.9)} ${sx(0.95)} ${sy(55.93)} ${sx(0.02)} ${sy(29.95)} C${sx(-0.63)} ${sy(11.75)} ${sx(13.73)} ${sy(0.09)} ${sx(30.25)} ${sy(0.3)} C${sx(45.01)} ${sy(0.5)} ${sx(51.22)} ${sy(7.84)} ${sx(60.83)} ${sy(17.19)}Z')`;
+}
+
 let resizeObserver: ResizeObserver | null = null;
 
 onMounted(() => {
-  if (!frameRef.value || !import.meta.client) {
-    return;
-  }
+  if (!import.meta.client) return;
+
+  if (!frameRef.value) return;
 
   resizeObserver = new ResizeObserver((entries) => {
     if (!entries.length) return;
-    setContainerWidth(entries[0].contentRect.width);
+    const rect = entries[0].contentRect;
+    setContainerWidth(rect.width);
+    frameWidth.value = rect.width;
+    frameHeight.value = rect.height;
   });
 
   resizeObserver.observe(frameRef.value);
@@ -240,10 +216,6 @@ watch(
 const onMapReady = (map: MapLibreMap) => {
   mapRef.value = map;
   emit("map-ready", map);
-
-  map.on("rotate", () => {
-    mapBearing.value = map.getBearing();
-  });
 };
 
 const onMove = async (center: [number, number], _zoom: number) => {
@@ -255,79 +227,20 @@ const onMoveEnd = async (center: [number, number], zoom: number) => {
 };
 
 const handleStartEditing = () => {
-  savedCenter.value = { lat: store.latitude, lon: store.longitude };
   isEditing.value = true;
-  if (mapRef.value) {
-    mapBearing.value = mapRef.value.getBearing();
-  }
 };
 
 const handleFinishEditing = () => {
   isEditing.value = false;
-  isRotationEnabled.value = false;
 };
 
-const handleZoomIn = () => {
-  if (!mapRef.value) return;
-  const nextZoom = Math.min(mapRef.value.getZoom() + MAP_BUTTON_ZOOM_STEP, mapMaxZoom.value);
-  if (Math.abs(nextZoom - mapRef.value.getZoom()) < 0.0001) return;
-  mapRef.value.zoomTo(nextZoom, { duration: MAP_BUTTON_ZOOM_DURATION_MS });
-};
-
-const handleZoomOut = () => {
-  if (!mapRef.value) return;
-  const nextZoom = Math.max(mapRef.value.getZoom() - MAP_BUTTON_ZOOM_STEP, mapMinZoom.value);
-  if (Math.abs(nextZoom - mapRef.value.getZoom()) < 0.0001) return;
-  mapRef.value.zoomTo(nextZoom, { duration: MAP_BUTTON_ZOOM_DURATION_MS });
-};
-
-const handleZoomSlider = (event: Event) => {
-  if (!mapRef.value) return;
-  const value = Number((event.target as HTMLInputElement).value);
-  if (!Number.isFinite(value)) return;
-  mapRef.value.zoomTo(value, { duration: MAP_BUTTON_ZOOM_DURATION_MS });
-};
-
-const handleRotateBy = (deltaDeg: number) => {
-  if (!mapRef.value) return;
-  const current = mapRef.value.getBearing();
-  const nextBearing = Math.max(-180, Math.min(180, current + deltaDeg));
-  mapBearing.value = nextBearing;
-  mapRef.value.rotateTo(nextBearing, { duration: MAP_BUTTON_ZOOM_DURATION_MS });
-};
-
-const handleRotationSlider = (event: Event) => {
-  if (!mapRef.value) return;
-  const value = Number((event.target as HTMLInputElement).value);
-  if (!Number.isFinite(value)) return;
-  mapBearing.value = value;
-  mapRef.value.rotateTo(value, { duration: MAP_BUTTON_ZOOM_DURATION_MS });
-};
-
-const handleRecenter = () => {
-  if (!mapRef.value) return;
-
-  const center = savedCenter.value || {
-    lat: store.latitude || DEFAULT_LAT,
-    lon: store.longitude || DEFAULT_LON,
-  };
-
-  store.setCoordinates(center.lat, center.lon);
-
-  mapRef.value.stop();
-  mapRef.value.jumpTo({
-    center: [center.lon, center.lat],
-    zoom: mapZoom.value,
-    bearing: 0,
-    pitch: 0,
-  });
-
-  mapBearing.value = 0;
-
-  if (!store.location.trim()) {
-    store.location = DEFAULT_LOCATION_LABEL;
-  }
-};
+watch(
+  () => store.mapBearing,
+  (bearing) => {
+    if (!mapRef.value) return;
+    mapRef.value.rotateTo(bearing, { duration: MAP_BUTTON_ZOOM_DURATION_MS });
+  },
+);
 
 const getMap = () => mapRef.value;
 const flyTo = (lat: number, lon: number) => {

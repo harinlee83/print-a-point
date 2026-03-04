@@ -1,0 +1,159 @@
+export interface MapShape {
+  id: string;
+  label: string;
+  /** CSS clip-path polygon/circle/path for the preview container. */
+  cssClipPath: string;
+  /** Returns a Path2D for canvas clipping at given width/height. */
+  canvasClipPath: (w: number, h: number) => Path2D;
+  /** SVG path for the picker icon (viewBox 0 0 24 24). */
+  iconPath: string;
+  /**
+   * Ratio (0-1) of the poster height where the shape ends.
+   * Text is positioned below this line for non-none shapes.
+   * "none" = 1 (full bleed, text overlays the map).
+   */
+  shapeBottomRatio: number;
+}
+
+export const DEFAULT_MAP_SHAPE_ID = "none";
+
+export const MAP_SHAPES: MapShape[] = [
+  {
+    id: "none",
+    label: "None",
+    cssClipPath: "none",
+    canvasClipPath: (w, h) => {
+      const p = new Path2D();
+      p.rect(0, 0, w, h);
+      return p;
+    },
+    // Prohibition sign: circle with diagonal line using proper arcs
+    iconPath: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2.5a7.5 7.5 0 1 1 0 15 7.5 7.5 0 0 1 0-15zM5.7 17.3 17.3 5.7a.9.9 0 0 1 1 1L6.7 18.3a.9.9 0 0 1-1-1z",
+    shapeBottomRatio: 1,
+  },
+  {
+    id: "classic",
+    label: "Classic",
+    cssClipPath: "inset(5% 6% 22% 6% round 2%)",
+    canvasClipPath: (w, h) => {
+      const p = new Path2D();
+      const l = w * 0.06;
+      const t = h * 0.05;
+      const r = w * 0.94;
+      const b = h * 0.78;
+      const radius = Math.min(w, h) * 0.02;
+      p.moveTo(l + radius, t);
+      p.lineTo(r - radius, t);
+      p.arcTo(r, t, r, t + radius, radius);
+      p.lineTo(r, b - radius);
+      p.arcTo(r, b, r - radius, b, radius);
+      p.lineTo(l + radius, b);
+      p.arcTo(l, b, l, b - radius, radius);
+      p.lineTo(l, t + radius);
+      p.arcTo(l, t, l + radius, t, radius);
+      p.closePath();
+      return p;
+    },
+    iconPath: "M5 4h14v14H5z",
+    shapeBottomRatio: 0.78,
+  },
+  {
+    id: "wave",
+    label: "Wave",
+    cssClipPath:
+      "polygon(0% 0%, 100% 0%, 100% 68%, 90% 73%, 75% 71%, 60% 75%, 45% 73%, 30% 71%, 15% 75%, 0% 71%)",
+    canvasClipPath: (w, h) => {
+      const p = new Path2D();
+      p.moveTo(0, 0);
+      p.lineTo(w, 0);
+      p.lineTo(w, h * 0.68);
+      // wave curve
+      p.bezierCurveTo(w * 0.85, h * 0.75, w * 0.7, h * 0.69, w * 0.5, h * 0.73);
+      p.bezierCurveTo(w * 0.3, h * 0.77, w * 0.15, h * 0.69, 0, h * 0.71);
+      p.closePath();
+      return p;
+    },
+    iconPath:
+      "M3 3h18v12c-1.5 1.2-3 1.8-4.5 1.2s-3-1.8-4.5-1.2-3 1.8-4.5 1.2S3 15 3 15z",
+    shapeBottomRatio: 0.75,
+  },
+  {
+    id: "circle",
+    label: "Circle",
+    // center at 40% down, radius 30% of min dimension
+    cssClipPath: "circle(30% at 50% 38%)",
+    canvasClipPath: (w, h) => {
+      const p = new Path2D();
+      const cx = w / 2;
+      const cy = h * 0.38;
+      const r = Math.min(w, h) * 0.30;
+      p.arc(cx, cy, r, 0, Math.PI * 2);
+      return p;
+    },
+    iconPath: "M12 4a8 8 0 100 16 8 8 0 000-16z",
+    shapeBottomRatio: 0.72,
+  },
+  {
+    id: "heart",
+    label: "Heart",
+    // Generated dynamically in PosterPreview to preserve aspect ratio
+    cssClipPath: "heart",
+    canvasClipPath: (w, h) => {
+      // heart-icon.svg viewBox 0 0 122.88 107.41 — preserve aspect ratio
+      const ar = 122.88 / 107.41;
+      const hw = w * 0.84;
+      const hh = Math.min(hw / ar, h * 0.60);
+      const finalW = hh * ar;
+      const ox = (w - finalW) / 2;
+      const oy = h * 0.10;
+      const sx = (x: number) => ox + (x / 122.88) * finalW;
+      const sy = (y: number) => oy + (y / 107.41) * hh;
+
+      const p = new Path2D();
+      p.moveTo(sx(60.83), sy(17.19));
+      p.bezierCurveTo(sx(68.84), sy(8.84), sx(74.45), sy(1.62), sx(86.79), sy(0.21));
+      p.bezierCurveTo(sx(109.96), sy(-2.45), sx(131.27), sy(21.27), sx(119.57), sy(44.62));
+      p.bezierCurveTo(sx(116.24), sy(51.27), sx(109.46), sy(59.18), sx(101.96), sy(66.94));
+      p.bezierCurveTo(sx(93.73), sy(75.46), sx(84.62), sy(83.81), sx(78.24), sy(90.14));
+      p.lineTo(sx(60.84), sy(107.40));
+      p.lineTo(sx(46.46), sy(93.56));
+      p.bezierCurveTo(sx(29.16), sy(76.9), sx(0.95), sy(55.93), sx(0.02), sy(29.95));
+      p.bezierCurveTo(sx(-0.63), sy(11.75), sx(13.73), sy(0.09), sx(30.25), sy(0.3));
+      p.bezierCurveTo(sx(45.01), sy(0.5), sx(51.22), sy(7.84), sx(60.83), sy(17.19));
+      p.closePath();
+      return p;
+    },
+    iconPath:
+      "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+    shapeBottomRatio: 0.72,
+  },
+  {
+    id: "house",
+    label: "House",
+    // Inset from edges to prevent cutoff
+    cssClipPath: "polygon(50% 8%, 90% 32%, 90% 72%, 10% 72%, 10% 32%)",
+    canvasClipPath: (w, h) => {
+      const p = new Path2D();
+      p.moveTo(w * 0.5, h * 0.08);
+      p.lineTo(w * 0.9, h * 0.32);
+      p.lineTo(w * 0.9, h * 0.72);
+      p.lineTo(w * 0.1, h * 0.72);
+      p.lineTo(w * 0.1, h * 0.32);
+      p.closePath();
+      return p;
+    },
+    iconPath: "M12 3L2 10h3v8h14v-8h3z",
+    shapeBottomRatio: 0.76,
+  },
+];
+
+
+export function getMapShapeById(id: string): MapShape | undefined {
+  return MAP_SHAPES.find((s) => s.id === id);
+}
+
+export function resolveMapShape(id: string): MapShape {
+  const found = MAP_SHAPES.find((s) => s.id === id);
+  if (!found) return MAP_SHAPES[0]!;
+  return found;
+}

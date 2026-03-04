@@ -9,6 +9,8 @@ import {
 import { generateMapStyle } from "~/lib/map/maplibreStyle";
 import type { SearchResult } from "~/lib/location/nominatim";
 import { getPinStyleById, PIN_SIZE_MIN, PIN_SIZE_MAX } from "~/lib/pin/pinStyles";
+import { getMapShapeById, DEFAULT_MAP_SHAPE_ID } from "~/lib/shapes/mapShapes";
+import { getTextPresetById, DEFAULT_TEXT_PRESET_ID } from "~/lib/text/textPresets";
 
 export const DEFAULT_LAT = 52.3759;
 export const DEFAULT_LON = 9.732;
@@ -32,7 +34,16 @@ export const useMapStore = defineStore("map", {
     selectedSizeId: DEFAULT_POSTER_SIZE_ID,
 
     fontFamily: "",
-    showPosterText: true,
+    showTitle: true,
+    showDivider: true,
+    showSubtitle: true,
+    showCoordinates: true,
+    displayCoordinates: "",
+
+    mapShape: DEFAULT_MAP_SHAPE_ID,
+    shapeBackgroundColor: "",
+    mapBearing: 0,
+    textPresetId: DEFAULT_TEXT_PRESET_ID,
 
     showPin: false,
     pinStyleId: "classic",
@@ -82,6 +93,10 @@ export const useMapStore = defineStore("map", {
 
     effectivePinColor(state): string {
       return state.pinColor || this.effectiveTheme.ui.text;
+    },
+
+    showAnyText(state): boolean {
+      return state.showTitle || state.showDivider || state.showSubtitle || state.showCoordinates;
     },
 
     mapCenter(state): [number, number] {
@@ -158,6 +173,24 @@ export const useMapStore = defineStore("map", {
       if (continent.trim()) {
         this.displayContinent = continent.trim();
       }
+    },
+
+    setMapShape(shapeId: string) {
+      if (!getMapShapeById(shapeId)) return;
+      this.mapShape = shapeId;
+    },
+
+    setMapBearing(bearing: number) {
+      if (!Number.isFinite(bearing)) return;
+      this.mapBearing = Math.max(-180, Math.min(180, bearing));
+    },
+
+    setTextPreset(presetId: string) {
+      const preset = getTextPresetById(presetId);
+      if (!preset) return;
+      this.textPresetId = presetId;
+      this.fontFamily = preset.fontFamily;
+      this.showDivider = preset.showDividerDefault;
     },
 
     setPinStyle(styleId: string) {

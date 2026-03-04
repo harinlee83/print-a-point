@@ -1,44 +1,53 @@
 <template>
   <div class="poster-text-overlay" :style="{ color: textColor }">
-    <template v-if="showPosterText">
-      <p
-        class="poster-city"
-        :style="{
-          fontFamily: titleFont,
-          top: `${TEXT_CITY_Y_RATIO * 100}%`,
-          fontSize: cityFontSize,
-        }"
-      >
-        {{ cityLabel }}
-      </p>
-      <hr
-        class="poster-divider"
-        :style="{
-          borderColor: textColor,
-          top: `${TEXT_DIVIDER_Y_RATIO * 100}%`,
-        }"
-      />
-      <p
-        class="poster-country"
-        :style="{
-          fontFamily: titleFont,
-          top: `${TEXT_COUNTRY_Y_RATIO * 100}%`,
-          fontSize: countryFontSize,
-        }"
-      >
-        {{ country.toUpperCase() }}
-      </p>
-      <p
-        class="poster-coords"
-        :style="{
-          fontFamily: bodyFont,
-          top: `${TEXT_COORDS_Y_RATIO * 100}%`,
-          fontSize: coordsFontSize,
-        }"
-      >
-        {{ formatCoordinates(lat, lon) }}
-      </p>
-    </template>
+    <p
+      v-if="showTitle"
+      class="poster-city"
+      :style="{
+        fontFamily: titleFont,
+        top: `${cityYPercent}%`,
+        fontSize: cityFontSize,
+        fontWeight: preset.cityWeight,
+        letterSpacing: preset.cityLetterSpacing || undefined,
+        textTransform: (preset.cityTransform as any) || undefined,
+      }"
+    >
+      {{ cityLabel }}
+    </p>
+    <hr
+      v-if="showDivider"
+      class="poster-divider"
+      :style="{
+        borderColor: textColor,
+        top: `${dividerYPercent}%`,
+      }"
+    />
+    <p
+      v-if="showSubtitle"
+      class="poster-country"
+      :style="{
+        fontFamily: titleFont,
+        top: `${countryYPercent}%`,
+        fontSize: countryFontSize,
+        fontWeight: preset.countryWeight,
+        letterSpacing: preset.countryLetterSpacing || undefined,
+        textTransform: (preset.countryTransform as any) || undefined,
+      }"
+    >
+      {{ countryLabel }}
+    </p>
+    <p
+      v-if="showCoordinates"
+      class="poster-coords"
+      :style="{
+        fontFamily: bodyFont,
+        top: `${coordsYPercent}%`,
+        fontSize: coordsFontSize,
+        fontWeight: preset.coordsWeight,
+      }"
+    >
+      {{ coordsText }}
+    </p>
   </div>
 </template>
 
@@ -60,6 +69,8 @@ import {
   formatCityLabel,
   isLatinScript,
 } from "~/lib/export/textLayout";
+import { resolveTextPreset } from "~/lib/text/textPresets";
+import { resolveMapShape } from "~/lib/shapes/mapShapes";
 
 const props = defineProps<{
   city: string;
@@ -68,8 +79,19 @@ const props = defineProps<{
   lon: number;
   fontFamily: string;
   textColor: string;
-  showPosterText: boolean;
+  showTitle: boolean;
+  showDivider: boolean;
+  showSubtitle: boolean;
+  showCoordinates: boolean;
+  textPresetId: string;
+  mapShapeId: string;
+  coordinates: string;
 }>();
+
+const preset = computed(() => resolveTextPreset(props.textPresetId));
+const shape = computed(() => resolveMapShape(props.mapShapeId));
+
+const isNoneShape = computed(() => props.mapShapeId === "none");
 
 const toCqMin = (px: number) => (px / TEXT_DIMENSION_REFERENCE_PX) * 100;
 
@@ -84,14 +106,63 @@ const bodyFont = computed(() =>
     : '"IBM Plex Mono", monospace',
 );
 
-const cityLabel = computed(() => formatCityLabel(props.city));
+const cityLabel = computed(() => {
+  if (preset.value.useWideSpacing) {
+    return formatCityLabel(props.city);
+  }
+  if (preset.value.cityTransform === "uppercase") {
+    return props.city.toUpperCase();
+  }
+  return props.city;
+});
+
+const countryLabel = computed(() => {
+  if (preset.value.countryTransform === "uppercase") {
+    return props.country.toUpperCase();
+  }
+  return props.country;
+});
+
+const coordsText = computed(() =>
+  props.coordinates.trim()
+    ? props.coordinates.trim()
+    : formatCoordinates(props.lat, props.lon),
+);
+
+// For non-classic shapes, text goes below the shape
+const textAreaStart = computed(() => {
+  if (isNoneShape.value) return 0;
+  const ratio = shape.value.shapeBottomRatio;
+  return ratio;
+});
+
+function computeYPercent(baseRatio: number): number {
+  if (isNoneShape.value) return baseRatio * 100;
+  // Map the text area (shapeBottomRatio..1) to the original ratios
+  const start = textAreaStart.value;
+  const available = 1 - start;
+  // Remap: original text occupies ~0.845..0.93, normalize to 0..1 then fill available
+  const textRangeStart = TEXT_CITY_Y_RATIO;
+  const textRangeEnd = TEXT_COORDS_Y_RATIO;
+  const normalT = (baseRatio - textRangeStart) / (textRangeEnd - textRangeStart);
+  // Add padding (10% of available at top, 15% at bottom)
+  const padTop = available * 0.15;
+  const usable = available * 0.7;
+  return (start + padTop + normalT * usable) * 100;
+}
+
+const cityYPercent = computed(() => computeYPercent(TEXT_CITY_Y_RATIO));
+const dividerYPercent = computed(() => computeYPercent(TEXT_DIVIDER_Y_RATIO));
+const countryYPercent = computed(() => computeYPercent(TEXT_COUNTRY_Y_RATIO));
+const coordsYPercent = computed(() => computeYPercent(TEXT_COORDS_Y_RATIO));
 
 const cityFontSize = computed(() => {
-  const cityLen = Math.max(cityLabel.value.length, 1);
+  const label = cityLabel.value;
+  const cityLen = Math.max(label.length, 1);
   const threshold = isLatinScript(props.city)
     ? CITY_TEXT_SHRINK_THRESHOLD_LATIN
     : CITY_TEXT_SHRINK_THRESHOLD;
-  const cityBaseSize = toCqMin(CITY_FONT_BASE_PX);
+  const cityBaseSize = toCqMin(CITY_FONT_BASE_PX * preset.value.citySizeScale);
   const cityMinSize = toCqMin(CITY_FONT_MIN_PX);
   if (cityLen > threshold) {
     return `${Math.max(
@@ -102,6 +173,10 @@ const cityFontSize = computed(() => {
   return `${cityBaseSize}cqmin`;
 });
 
-const countryFontSize = computed(() => `${toCqMin(COUNTRY_FONT_BASE_PX)}cqmin`);
-const coordsFontSize = computed(() => `${toCqMin(COORDS_FONT_BASE_PX)}cqmin`);
+const countryFontSize = computed(
+  () => `${toCqMin(COUNTRY_FONT_BASE_PX * preset.value.countrySizeScale)}cqmin`,
+);
+const coordsFontSize = computed(
+  () => `${toCqMin(COORDS_FONT_BASE_PX * preset.value.coordsSizeScale)}cqmin`,
+);
 </script>

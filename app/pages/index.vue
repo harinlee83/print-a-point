@@ -10,9 +10,11 @@
     <main class="home-main">
       <section class="home-hero">
         <div class="home-hero-copy">
-          <h1>Design your city map. Print it big.</h1>
+          <h1>Your city, your style, printed.</h1>
+          <p class="home-hero-subtext">design completely for free</p>
         </div>
 
+        <NuxtLink class="home-cta" to="/create">Start Designing</NuxtLink>
         <div class="home-carousel" aria-label="Poster sample carousel">
           <div class="home-carousel-track">
             <NuxtLink
@@ -29,7 +31,6 @@
           </div>
         </div>
 
-        <NuxtLink class="home-cta" to="/create">Start Designing</NuxtLink>
       </section>
 
     </main>

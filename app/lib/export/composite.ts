@@ -2,6 +2,7 @@ import { applyFades } from "./layers";
 import { drawPin } from "./pin";
 import { drawPosterText } from "./typography";
 import type { ResolvedTheme } from "~/lib/theme/types";
+import { resolveMapShape } from "~/lib/shapes/mapShapes";
 
 export interface CompositeOptions {
   theme: ResolvedTheme;
@@ -9,11 +10,18 @@ export interface CompositeOptions {
   displayCity: string;
   displayCountry: string;
   fontFamily: string;
-  showPosterText: boolean;
+  showTitle: boolean;
+  showDivider: boolean;
+  showSubtitle: boolean;
+  showCoordinates: boolean;
   showPin: boolean;
   pinStyleId: string;
   pinColor: string;
   pinSize: number;
+  mapShape: string;
+  shapeBackgroundColor: string;
+  textPresetId: string;
+  displayCoordinates: string;
 }
 
 export function compositeExport(
@@ -32,8 +40,26 @@ export function compositeExport(
     throw new Error("Canvas rendering is not available.");
   }
 
-  ctx.drawImage(mapCanvas, 0, 0);
-  applyFades(ctx, width, height, options.theme.ui.bg);
+  const shape = resolveMapShape(options.mapShape);
+  const isNone = options.mapShape === "none";
+
+  if (!isNone) {
+    // Fill background first for shaped maps
+    const bgColor = options.shapeBackgroundColor || options.theme.ui.bg;
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, width, height);
+
+    // Clip map to shape
+    ctx.save();
+    const clipPath = shape.canvasClipPath(width, height);
+    ctx.clip(clipPath);
+    ctx.drawImage(mapCanvas, 0, 0);
+    ctx.restore();
+  } else {
+    ctx.drawImage(mapCanvas, 0, 0);
+    applyFades(ctx, width, height, options.theme.ui.bg);
+  }
+
   drawPin(ctx, {
     width,
     height,
@@ -42,6 +68,7 @@ export function compositeExport(
     pinColor: options.pinColor,
     pinSize: options.pinSize,
   });
+
   drawPosterText(ctx, {
     width,
     height,
@@ -50,7 +77,13 @@ export function compositeExport(
     city: options.displayCity,
     country: options.displayCountry,
     fontFamily: options.fontFamily,
-    showPosterText: options.showPosterText,
+    showTitle: options.showTitle,
+    showDivider: options.showDivider,
+    showSubtitle: options.showSubtitle,
+    showCoordinates: options.showCoordinates,
+    textPresetId: options.textPresetId,
+    mapShapeId: options.mapShape,
+    displayCoordinates: options.displayCoordinates,
   });
 
   return canvas;
