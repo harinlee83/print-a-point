@@ -1,6 +1,7 @@
 import { useMapStore } from "~/stores/map";
 import { themeNames } from "~/lib/theme/themeRepository";
 import { getMapShapeById } from "~/lib/shapes/mapShapes";
+import { PRODUCT_TYPE_IDS, type ProductTypeId, type FrameColorId } from "~~/shared/productCatalog";
 
 export function useShareConfig() {
   const route = useRoute();
@@ -18,6 +19,10 @@ export function useShareConfig() {
     params.set("distance", String(store.distance));
     params.set("bearing", String(store.mapBearing));
     params.set("size", store.selectedSizeId);
+    params.set("productType", store.selectedProductType);
+    if (store.needsFrameSelection) {
+      params.set("frameColor", store.selectedFrameColor);
+    }
     params.set("pin", store.showPin ? "1" : "0");
     params.set("pinX", String(store.pinOffsetX));
     params.set("pinY", String(store.pinOffsetY));
@@ -77,8 +82,18 @@ export function useShareConfig() {
     }
 
     const size = String(q.size ?? "").trim();
-    if (size && ["18x24", "24x36", "30x40"].includes(size)) {
+    if (size && ["18x24", "24x36", "30x40", "12x16"].includes(size)) {
       store.setSize(size);
+    }
+
+    const productType = String(q.productType ?? "").trim();
+    if (productType && PRODUCT_TYPE_IDS.includes(productType as ProductTypeId)) {
+      store.setProductType(productType as ProductTypeId);
+    }
+
+    const frameColor = String(q.frameColor ?? "").trim();
+    if (frameColor && ["black", "white", "walnut"].includes(frameColor)) {
+      store.setFrameColor(frameColor as FrameColorId);
     }
 
     const pin = q.pin;

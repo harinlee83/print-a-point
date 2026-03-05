@@ -124,16 +124,22 @@ const startCheckout = async () => {
       body: formData,
     });
 
+    const checkoutBody: Record<string, any> = {
+      imageUrl: uploadResponse.url,
+      productTypeId: store.selectedProductType,
+      sizeLabel: store.selectedVariant?.sizeLabel ?? "",
+      locationLabel: store.location,
+      displayCity: store.displayCity,
+      displayCountry: store.displayCountry,
+      themeId: store.selectedThemeId,
+    };
+    if (store.needsFrameSelection) {
+      checkoutBody.frameColor = store.selectedFrameColor;
+    }
+
     const checkoutResponse = await $fetch<{ url: string }>("/api/checkout", {
       method: "POST",
-      body: {
-        imageUrl: uploadResponse.url,
-        sizeId: store.selectedSizeId,
-        locationLabel: store.location,
-        displayCity: store.displayCity,
-        displayCountry: store.displayCountry,
-        themeId: store.selectedThemeId,
-      },
+      body: checkoutBody,
     });
 
     if (!checkoutResponse.url) {

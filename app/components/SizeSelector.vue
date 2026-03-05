@@ -4,12 +4,12 @@
     <div class="size-grid">
       <button
         v-for="size in sizes"
-        :key="size.id"
+        :key="size.sizeLabel"
         type="button"
-        :class="['size-card', { 'is-active': size.id === modelValue }]"
-        @click="$emit('update:modelValue', size.id)"
+        :class="['size-card', { 'is-active': size.sizeLabel === modelValue }]"
+        @click="$emit('update:modelValue', size.sizeLabel)"
       >
-        <p class="size-title">{{ size.label }}</p>
+        <p class="size-title">{{ size.sizeLabel }}</p>
         <p class="size-meta">
           {{ size.widthCm.toFixed(1) }} x {{ size.heightCm.toFixed(1) }} cm
         </p>
@@ -20,15 +20,15 @@
 </template>
 
 <script setup lang="ts">
-import type { PosterSize, PosterSizeId } from "~~/shared/posterSizes";
-import { formatUsd } from "~~/shared/posterSizes";
+import type { ProductVariant } from "~~/shared/productCatalog";
+import { formatUsd } from "~~/shared/productCatalog";
 
 defineProps<{
-  sizes: PosterSize[];
-  modelValue: PosterSizeId;
+  sizes: ProductVariant[];
+  modelValue: string;
 }>();
 
 defineEmits<{
-  "update:modelValue": [value: PosterSizeId];
+  "update:modelValue": [value: string];
 }>();
 </script>

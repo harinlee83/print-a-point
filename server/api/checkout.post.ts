@@ -1,11 +1,15 @@
-import { getServerPosterSizeById } from "~~/server/utils/sizeCatalog";
+import { getServerPosterSizeById, getServerVariant } from "~~/server/utils/sizeCatalog";
 import { getAllowedCountriesForCheckout } from "~~/server/utils/printful";
 import { getStripeClient } from "~~/server/utils/stripe";
 import type { H3Event } from "h3";
+import type { ProductTypeId, FrameColorId } from "~~/shared/productCatalog";
 
 interface CheckoutRequestBody {
   imageUrl?: string;
   sizeId?: string;
+  productTypeId?: ProductTypeId;
+  sizeLabel?: string;
+  frameColor?: FrameColorId;
   locationLabel?: string;
   displayCity?: string;
   displayCountry?: string;
@@ -41,7 +45,6 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<CheckoutRequestBody>(event);
 
   const imageUrl = String(body.imageUrl ?? "").trim();
-  const sizeId = String(body.sizeId ?? "").trim();
   const locationLabel = String(body.locationLabel ?? "").trim();
   const displayCity = String(body.displayCity ?? "").trim();
   const displayCountry = String(body.displayCountry ?? "").trim();
@@ -54,25 +57,66 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const size = getServerPosterSizeById(sizeId, event);
-  if (!size) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid sizeId",
-    });
-  }
+  // Support new product-type-based checkout
+  const productTypeId = body.productTypeId;
+  const sizeLabel = String(body.sizeLabel ?? "").trim();
+  const frameColor = body.frameColor;
 
-  const variantEnvBySize = {
-    "18x24": "NUXT_PRINTFUL_VARIANT_18X24",
-    "24x36": "NUXT_PRINTFUL_VARIANT_24X36",
-    "30x40": "NUXT_PRINTFUL_VARIANT_30X40",
-  } as const;
+  let variantId: number | null = null;
+  let priceCents: number;
+  let productName: string;
 
-  if (!size.variantId) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: `Printful variant is missing for ${size.label}. Set ${variantEnvBySize[size.id]}.`,
-    });
+  if (productTypeId && sizeLabel) {
+    // New product catalog flow
+    const variant = getServerVariant(productTypeId, sizeLabel, frameColor, event);
+    if (!variant) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `No variant found for ${productTypeId} ${sizeLabel}${frameColor ? ` ${frameColor}` : ""}`,
+      });
+    }
+
+    variantId = variant.variantId;
+    priceCents = variant.priceCents;
+
+    // Build descriptive product name
+    const typeLabels: Record<string, string> = {
+      poster: "Poster",
+      "framed-poster": "Framed Poster",
+      canvas: "Canvas",
+      "framed-canvas": "Framed Canvas",
+    };
+    const typeName = typeLabels[productTypeId] ?? "Print";
+    const frameSuffix = frameColor ? ` - ${frameColor.charAt(0).toUpperCase() + frameColor.slice(1)} Frame` : "";
+    productName = `Custom Map ${typeName} - ${sizeLabel}${frameSuffix}`;
+
+    if (!variantId) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: `Printful variant is not configured for ${productName}. Set the corresponding env var.`,
+      });
+    }
+  } else {
+    // Legacy flow: use sizeId
+    const sizeId = String(body.sizeId ?? "").trim();
+    const size = getServerPosterSizeById(sizeId, event);
+    if (!size) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Invalid sizeId",
+      });
+    }
+
+    variantId = size.variantId;
+    priceCents = size.priceCents;
+    productName = `Custom Map Poster - ${size.label}`;
+
+    if (!variantId) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: `Printful variant is missing for ${size.label}.`,
+      });
+    }
   }
 
   const allowedCountries = await getAllowedCountriesForCheckout();
@@ -86,11 +130,11 @@ export default defineEventHandler(async (event) => {
         quantity: 1,
         price_data: {
           currency: "usd",
-          unit_amount: size.priceCents,
+          unit_amount: priceCents,
           product_data: {
-            name: `Custom Map Poster - ${size.label}`,
+            name: productName,
             description:
-              "Museum-quality matte print. Printed on demand and shipped by Printful.",
+              "Museum-quality print. Printed on demand and shipped by Printful.",
           },
         },
       },
@@ -106,9 +150,10 @@ export default defineEventHandler(async (event) => {
     },
     metadata: {
       imageUrl,
-      sizeId: size.id,
-      sizeLabel: size.label,
-      printfulVariantId: String(size.variantId),
+      productTypeId: productTypeId ?? "poster",
+      sizeLabel: sizeLabel || productName,
+      frameColor: frameColor ?? "",
+      printfulVariantId: String(variantId),
       locationLabel,
       displayCity,
       displayCountry,

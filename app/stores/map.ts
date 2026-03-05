@@ -1,5 +1,13 @@
 import { defineStore } from "pinia";
 import { DEFAULT_POSTER_SIZE_ID, getPosterSizeById } from "~~/shared/posterSizes";
+import {
+  PRODUCT_TYPES,
+  PRODUCT_TYPE_IDS,
+  getProductTypeById,
+  getAvailableSizes,
+  type ProductTypeId,
+  type FrameColorId,
+} from "~~/shared/productCatalog";
 import { applyThemeColorOverrides } from "~/lib/theme/colorPaths";
 import {
   defaultThemeName,
@@ -31,6 +39,8 @@ export const useMapStore = defineStore("map", {
     selectedThemeId: defaultThemeName,
     customColors: {} as Record<string, string>,
 
+    selectedProductType: "poster" as ProductTypeId,
+    selectedFrameColor: "black" as FrameColorId,
     selectedSizeId: DEFAULT_POSTER_SIZE_ID,
 
     fontFamily: "",
@@ -73,12 +83,41 @@ export const useMapStore = defineStore("map", {
   }),
 
   getters: {
+    selectedProduct(state) {
+      return getProductTypeById(state.selectedProductType);
+    },
+
+    availableSizes(state) {
+      return getAvailableSizes(state.selectedProductType, state.selectedFrameColor);
+    },
+
+    selectedVariant(state) {
+      const sizes = getAvailableSizes(state.selectedProductType, state.selectedFrameColor);
+      const currentSize = getPosterSizeById(state.selectedSizeId);
+      const current = currentSize
+        ? sizes.find((v) => v.sizeLabel === currentSize.label)
+        : undefined;
+      return current ?? sizes[0];
+    },
+
+    needsFrameSelection(state) {
+      return getProductTypeById(state.selectedProductType).hasFrameOptions;
+    },
+
     selectedSize(state) {
       return getPosterSizeById(state.selectedSizeId) || getPosterSizeById(DEFAULT_POSTER_SIZE_ID)!;
     },
 
-    aspectRatio(): number {
-      const size = this.selectedSize;
+    aspectRatio(state): number {
+      const sizes = getAvailableSizes(state.selectedProductType, state.selectedFrameColor);
+      const currentSize = getPosterSizeById(state.selectedSizeId);
+      const variant = currentSize
+        ? sizes.find((v) => v.sizeLabel === currentSize.label)
+        : sizes[0];
+      if (variant) {
+        return variant.widthInches / variant.heightInches;
+      }
+      const size = getPosterSizeById(state.selectedSizeId) || getPosterSizeById(DEFAULT_POSTER_SIZE_ID)!;
       return size.widthInches / size.heightInches;
     },
 
@@ -137,6 +176,26 @@ export const useMapStore = defineStore("map", {
         return;
       }
       this.selectedSizeId = sizeId as typeof this.selectedSizeId;
+    },
+
+    setProductType(id: ProductTypeId) {
+      if (!PRODUCT_TYPE_IDS.includes(id)) return;
+      this.selectedProductType = id;
+      // Reset size to first available for this product type
+      const sizes = getAvailableSizes(id, this.selectedFrameColor);
+      if (sizes.length > 0) {
+        const sizeId = sizes[0].sizeLabel.replace(/\s/g, "").replace("x", "x").replace("in", "");
+        // Try to match a PosterSizeId
+        const match = sizes[0];
+        if (match) {
+          const posterSizeId = `${match.widthInches}x${match.heightInches}`;
+          this.selectedSizeId = posterSizeId as any;
+        }
+      }
+    },
+
+    setFrameColor(id: FrameColorId) {
+      this.selectedFrameColor = id;
     },
 
     setCustomColor(key: string, value: string) {

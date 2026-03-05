@@ -426,9 +426,20 @@
 
     <aside class="settings-print-col">
     <div class="settings-fixed">
+      <ProductTypeSelector
+        v-model="productTypeModel"
+        :products="PRODUCT_TYPES"
+      />
+
+      <FrameColorSelector
+        v-if="store.needsFrameSelection"
+        v-model="frameColorModel"
+        :options="store.selectedProduct.frameOptions"
+      />
+
       <SizeSelector
         v-model="sizeModel"
-        :sizes="POSTER_SIZES"
+        :sizes="store.availableSizes"
       />
 
       <div class="action-row">
@@ -444,7 +455,7 @@
           The "Made with printapoint.com" mark will be REMOVED from the final print.
         </p>
         <p class="subtle-note">
-          Checkout and fulfillment are powered by Stripe and Printful.
+          Checkout and fulfillment are securely powered by Stripe and Printful.
         </p>
       </div>
 
@@ -514,9 +525,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import SizeSelector from "~/components/SizeSelector.vue";
+import ProductTypeSelector from "~/components/ProductTypeSelector.vue";
+import FrameColorSelector from "~/components/FrameColorSelector.vue";
 import { useLocationAutocomplete } from "~/composables/useLocationAutocomplete";
 import { useMapStore } from "~/stores/map";
-import { formatUsd, POSTER_SIZES, type PosterSizeId } from "~~/shared/posterSizes";
+import { formatUsd, PRODUCT_TYPES, type ProductTypeId, type FrameColorId } from "~~/shared/productCatalog";
 import {
   DISPLAY_PALETTE_KEYS,
   PALETTE_COLOR_LABELS,
@@ -572,9 +585,26 @@ const themeModel = computed({
   set: (value: string) => store.setTheme(value),
 });
 
-const sizeModel = computed<PosterSizeId>({
-  get: () => store.selectedSizeId,
-  set: (value: PosterSizeId) => store.setSize(value),
+const productTypeModel = computed<ProductTypeId>({
+  get: () => store.selectedProductType,
+  set: (value: ProductTypeId) => store.setProductType(value),
+});
+
+const frameColorModel = computed<FrameColorId>({
+  get: () => store.selectedFrameColor,
+  set: (value: FrameColorId) => store.setFrameColor(value),
+});
+
+const sizeModel = computed<string>({
+  get: () => store.selectedVariant?.sizeLabel ?? store.availableSizes[0]?.sizeLabel ?? "",
+  set: (value: string) => {
+    // Find matching poster size id for backward compat
+    const variant = store.availableSizes.find((v: any) => v.sizeLabel === value);
+    if (variant) {
+      const sizeId = `${variant.widthInches}x${variant.heightInches}`;
+      store.setSize(sizeId);
+    }
+  },
 });
 
 const buyButtonLabel = computed(() => {
@@ -585,7 +615,9 @@ const buyButtonLabel = computed(() => {
     return "Preparing your print...";
   }
 
-  return `Buy Print - ${formatUsd(store.selectedSize.defaultPriceCents)}`;
+  const variant = store.selectedVariant;
+  const price = variant?.defaultPriceCents ?? store.selectedSize.defaultPriceCents;
+  return `Buy Print - ${formatUsd(price)}`;
 });
 
 const autoCoordinates = computed(() =>

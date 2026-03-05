@@ -8,32 +8,62 @@
     </header>
 
     <main class="home-main">
-      <section class="home-hero">
-        <div class="home-hero-copy">
-          <h1>Turn Coordinates into Art</h1>
-          <p class="home-hero-subtext">unlimited designs completely for free</p>
-        </div>
-
-        <NuxtLink class="home-cta" to="/create">Start Designing</NuxtLink>
-        <div class="home-carousel" aria-label="Poster sample carousel">
+      <!-- Carousel row 1 -->
+      <div class="home-carousel-section">
+        <div class="home-carousel" aria-label="Poster gallery row 1">
           <div class="home-carousel-track">
             <NuxtLink
-              v-for="(item, idx) in carouselItems"
-              :key="`${item.src}-${idx}`"
+              v-for="(item, idx) in carouselRow1"
+              :key="`r1-${item.src}-${idx}`"
               class="home-carousel-card"
               :to="item.ctaLink"
             >
-              <img :src="item.src" :alt="item.alt" />
+              <img :src="item.src" :alt="item.alt" loading="eager" />
               <div class="home-carousel-meta">
-                <p>{{ item.theme }}</p>
+                <p>{{ item.city }}</p>
               </div>
             </NuxtLink>
           </div>
         </div>
+      </div>
 
-        <FaqSection />
+      <!-- Headline + CTA between carousels -->
+      <section class="home-hero">
+        <div class="home-hero-copy">
+          <h1>Turn Coordinates<br /><em>into Art</em></h1>
+          <p class="home-hero-subtext">unlimited designs completely for free</p>
+        </div>
+        <NuxtLink class="home-cta" to="/create">Start Designing</NuxtLink>
+        <p class="home-trust-text">Museum-quality prints. Shipped worldwide. Powered by Printful.</p>
       </section>
 
+      <!-- Carousel row 2 -->
+      <div class="home-carousel-section">
+        <div class="home-carousel home-carousel--reverse" aria-label="Poster gallery row 2">
+          <div class="home-carousel-track home-carousel-track--reverse">
+            <NuxtLink
+              v-for="(item, idx) in carouselRow2"
+              :key="`r2-${item.src}-${idx}`"
+              class="home-carousel-card"
+              :to="item.ctaLink"
+            >
+              <img :src="item.src" :alt="item.alt" loading="eager" />
+              <div class="home-carousel-meta">
+                <p>{{ item.city }}</p>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <FaqSection />
+
+      <!-- Bottom CTA -->
+      <section class="home-bottom">
+        <p>Your place. Your story. Your wall.</p>
+        <NuxtLink class="home-cta" to="/create">Create Your Map</NuxtLink>
+      </section>
     </main>
   </div>
 </template>
@@ -117,7 +147,21 @@ const galleryItems = [
     theme: "Contrast Zones",
     ctaLink: "/create?theme=contrast_zones&city=Mumbai",
   },
+  {
+    src: "/gallery/new_york_noir.jpg",
+    alt: "New York noir map poster",
+    city: "New York",
+    theme: "Noir",
+    ctaLink: "/create?theme=noir&city=New%20York",
+  },
 ];
 
-const carouselItems = [...galleryItems, ...galleryItems];
+// Split gallery into two rows for the double carousel
+const mid = Math.ceil(galleryItems.length / 2);
+const row1Items = galleryItems.slice(0, mid);
+const row2Items = galleryItems.slice(mid);
+
+// Triplicate for seamless loop on wide screens
+const carouselRow1 = [...row1Items, ...row1Items, ...row1Items];
+const carouselRow2 = [...row2Items, ...row2Items, ...row2Items];
 </script>
