@@ -66,6 +66,9 @@ export const useMapStore = defineStore("map", {
     isCheckoutLoading: false,
     isHydratingLocation: false,
 
+    /** Edit mode: none | map | shape | text | pin */
+    editMode: "none" as "none" | "map" | "shape" | "text" | "pin",
+
     error: "",
   }),
 
@@ -188,6 +191,9 @@ export const useMapStore = defineStore("map", {
       this.mapShape = shapeId;
       this.mapShapeOffsetX = 0;
       this.mapShapeOffsetY = 0;
+      if (shapeId === "none" && this.editMode === "shape") {
+        this.editMode = "none";
+      }
     },
 
     setMapShapeScale(scale: number) {
@@ -247,6 +253,10 @@ export const useMapStore = defineStore("map", {
 
     setIsCheckoutLoading(value: boolean) {
       this.isCheckoutLoading = value;
+    },
+
+    setEditMode(mode: "none" | "map" | "shape" | "text" | "pin") {
+      this.editMode = mode;
     },
 
     async hydrateFromGeolocation(resolveNearest?: (lat: number, lon: number) => Promise<SearchResult>) {

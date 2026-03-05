@@ -11,7 +11,7 @@
       <section class="home-hero">
         <div class="home-hero-copy">
           <h1>Turn Coordinates into Art</h1>
-          <p class="home-hero-subtext">design completely for free</p>
+          <p class="home-hero-subtext">unlimited designs completely for free</p>
         </div>
 
         <NuxtLink class="home-cta" to="/create">Start Designing</NuxtLink>

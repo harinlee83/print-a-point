@@ -1,45 +1,5 @@
 <template>
   <section class="preview-panel">
-    <aside class="edit-controls-panel" aria-label="Map controls">
-      <div class="map-controls">
-        <div class="map-control-group">
-          <button
-            type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': isEditingMap }]"
-            @click="toggleEditMap"
-          >
-            {{ isEditingMap ? 'Done' : 'Edit Map' }}
-          </button>
-          <button
-            v-if="!isNoneShape"
-            type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningShape }]"
-            @click="togglePositionShape"
-          >
-            {{ isPositioningShape ? 'Done' : 'Edit Map Shape Position' }}
-          </button>
-          <button
-            v-if="store.showAnyText"
-            type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningText }]"
-            @click="togglePositionText"
-          >
-            {{ isPositioningText ? 'Done' : 'Edit Text Position' }}
-          </button>
-          <button
-            v-if="store.showPin"
-            type="button"
-            :class="['map-control-btn', { 'map-control-btn--primary': isPositioningPin }]"
-            @click="togglePositionPin"
-          >
-            {{ isPositioningPin ? 'Done' : 'Edit Pin Position' }}
-          </button>
-        </div>
-        <p class="map-control-hint">
-          {{ hintText }}
-        </p>
-      </div>
-    </aside>
     <div class="poster-viewport">
       <div
         ref="frameRef"
@@ -52,7 +12,7 @@
         <div
           ref="shapeContainerRef"
           class="map-shape-container"
-          :class="{ 'map-shape-container--draggable': isPositioningShape && !isNoneShape }"
+          :class="{ 'map-shape-container--draggable': store.editMode === 'shape' && !isNoneShape }"
           :style="{
             clipPath: computedClipPath,
             transform: `translate(${store.mapShapeOffsetX}%, ${store.mapShapeOffsetY}%)`,
@@ -63,7 +23,7 @@
               :style="store.mapStyle"
               :center="mapCenter"
               :zoom="mapZoom"
-              :interactive="isEditingMap"
+              :interactive="store.editMode === 'map'"
               :min-zoom="mapMinZoom"
               :max-zoom="mapMaxZoom"
               :overzoom-scale="MAP_OVERZOOM_SCALE"
@@ -75,7 +35,7 @@
           <GradientFades v-if="isNoneShape" :color="store.effectiveTheme.ui.bg" />
         </div>
         <div
-          v-if="isPositioningShape && !isNoneShape"
+          v-if="store.editMode === 'shape' && !isNoneShape"
           ref="dragOverlayRef"
           class="map-shape-drag-overlay"
           aria-label="Drag to reposition shape"
@@ -91,7 +51,7 @@
         />
         <div
           class="poster-text-wrapper"
-          :class="{ 'poster-text-wrapper--draggable': isPositioningText }"
+          :class="{ 'poster-text-wrapper--draggable': store.editMode === 'text' }"
           :style="{
             transform: `translate(${store.textOffsetX}%, ${store.textOffsetY}%)`,
           }"
@@ -114,13 +74,13 @@
           />
         </div>
         <div
-          v-if="isPositioningText && store.showAnyText"
+          v-if="store.editMode === 'text' && store.showAnyText"
           class="map-shape-drag-overlay"
           aria-label="Drag to reposition text"
           @pointerdown="onTextDragStart"
         />
         <div
-          v-if="isPositioningPin && store.showPin"
+          v-if="store.editMode === 'pin' && store.showPin"
           class="map-shape-drag-overlay"
           aria-label="Drag to reposition pin"
           @pointerdown="onPinDragStart"
@@ -162,10 +122,6 @@ const mapRef = ref<MapLibreMap | null>(null);
 const frameRef = ref<HTMLDivElement | null>(null);
 const shapeContainerRef = ref<HTMLDivElement | null>(null);
 const dragOverlayRef = ref<HTMLDivElement | null>(null);
-const isEditingMap = ref(false);
-const isPositioningShape = ref(false);
-const isPositioningText = ref(false);
-const isPositioningPin = ref(false);
 const showGuideX = ref(false);
 const showGuideY = ref(false);
 
@@ -231,66 +187,6 @@ const computedClipPath = computed(() => {
   }
   return activeShape.value.cssClipPath;
 });
-
-const hintText = computed(() => {
-  if (isEditingMap.value) {
-    return "Drag to move the map, scroll or pinch to zoom.";
-  }
-  if (isPositioningShape.value) {
-    return "Drag the shape to reposition it. The map stays fixed.";
-  }
-  if (isPositioningText.value) {
-    return "Drag to reposition the text block.";
-  }
-  if (isPositioningPin.value) {
-    return "Drag to reposition the pin.";
-  }
-  return "Map is locked. Use Edit Map to pan/zoom, Edit Map Shape Position to move the mask, Edit Text Position to move the text, or Edit Pin Position to move the pin.";
-});
-
-function toggleEditMap() {
-  if (isEditingMap.value) {
-    isEditingMap.value = false;
-  } else {
-    isPositioningShape.value = false;
-    isPositioningText.value = false;
-    isPositioningPin.value = false;
-    isEditingMap.value = true;
-  }
-}
-
-function togglePositionShape() {
-  if (isPositioningShape.value) {
-    isPositioningShape.value = false;
-  } else {
-    isEditingMap.value = false;
-    isPositioningText.value = false;
-    isPositioningPin.value = false;
-    isPositioningShape.value = true;
-  }
-}
-
-function togglePositionText() {
-  if (isPositioningText.value) {
-    isPositioningText.value = false;
-  } else {
-    isEditingMap.value = false;
-    isPositioningShape.value = false;
-    isPositioningPin.value = false;
-    isPositioningText.value = true;
-  }
-}
-
-function togglePositionPin() {
-  if (isPositioningPin.value) {
-    isPositioningPin.value = false;
-  } else {
-    isEditingMap.value = false;
-    isPositioningShape.value = false;
-    isPositioningText.value = false;
-    isPositioningPin.value = true;
-  }
-}
 
 function onShapeDragStart(e: PointerEvent) {
   e.preventDefault();
@@ -433,6 +329,18 @@ watch(
   (showPin, prevShowPin) => {
     if (showPin && !prevShowPin) {
       store.setPinOffset(0, 0);
+    }
+    if (!showPin && store.editMode === "pin") {
+      store.setEditMode("none");
+    }
+  },
+);
+
+watch(
+  () => store.showAnyText,
+  (showAnyText) => {
+    if (!showAnyText && store.editMode === "text") {
+      store.setEditMode("none");
     }
   },
 );

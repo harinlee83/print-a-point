@@ -1,5 +1,6 @@
 <template>
-  <form class="settings-panel" @submit.prevent>
+  <form class="customizer-layout" @submit.prevent>
+    <aside class="settings-scroll-col">
     <div class="settings-scroll">
     <section class="panel-block">
       <h2>Location</h2>
@@ -73,6 +74,15 @@
 
     <section class="panel-block">
       <h2>Map Settings</h2>
+      <div class="edit-mode-row">
+        <button
+          type="button"
+          :class="['map-control-btn', { 'map-control-btn--primary': store.editMode === 'map' }]"
+          @click="store.editMode === 'map' ? store.setEditMode('none') : store.setEditMode('map')"
+        >
+          {{ store.editMode === 'map' ? 'Done' : 'Edit Map' }}
+        </button>
+      </div>
       <label>
         Theme
         <select
@@ -139,6 +149,15 @@
           <svg class="shape-style-icon" viewBox="0 0 24 24">
             <path :d="ms.iconPath" fill="currentColor" />
           </svg>
+        </button>
+      </div>
+      <div v-if="store.mapShape !== 'none'" class="edit-mode-row">
+        <button
+          type="button"
+          :class="['map-control-btn', { 'map-control-btn--primary': store.editMode === 'shape' }]"
+          @click="store.editMode === 'shape' ? store.setEditMode('none') : store.setEditMode('shape')"
+        >
+          {{ store.editMode === 'shape' ? 'Done' : 'Edit Map Shape Position' }}
         </button>
       </div>
       <label v-if="store.mapShape !== 'none'" class="color-input-row">
@@ -224,7 +243,15 @@
 
     <section class="panel-block">
       <h2>Typography</h2>
-
+      <div v-if="store.showAnyText" class="edit-mode-row">
+        <button
+          type="button"
+          :class="['map-control-btn', { 'map-control-btn--primary': store.editMode === 'text' }]"
+          @click="store.editMode === 'text' ? store.setEditMode('none') : store.setEditMode('text')"
+        >
+          {{ store.editMode === 'text' ? 'Done' : 'Edit Text Position' }}
+        </button>
+      </div>
       <label>Text style</label>
       <div class="text-preset-grid">
         <button
@@ -327,6 +354,15 @@
         <span>Show pin</span>
         <input v-model="store.showPin" type="checkbox" />
       </label>
+      <div v-if="store.showPin" class="edit-mode-row">
+        <button
+          type="button"
+          :class="['map-control-btn', { 'map-control-btn--primary': store.editMode === 'pin' }]"
+          @click="store.editMode === 'pin' ? store.setEditMode('none') : store.setEditMode('pin')"
+        >
+          {{ store.editMode === 'pin' ? 'Done' : 'Edit Pin Position' }}
+        </button>
+      </div>
       <template v-if="store.showPin">
         <div class="pin-style-grid">
           <button
@@ -382,7 +418,13 @@
     </section>
 
     </div>
+    </aside>
 
+    <div class="poster-col">
+      <slot />
+    </div>
+
+    <aside class="settings-print-col">
     <div class="settings-fixed">
       <SizeSelector
         v-model="sizeModel"
@@ -465,6 +507,7 @@
       <p v-if="shareCopied" class="success-note">Link copied to clipboard!</p>
       <p v-else-if="store.error" class="error">{{ store.error }}</p>
     </div>
+    </aside>
   </form>
 </template>
 
@@ -514,7 +557,7 @@ const locationModel = computed({
       store.displayCity = parts[0];
     }
     if (parts.length > 1) {
-      store.displayCountry = parts[parts.length - 1];
+      store.displayCountry = parts[parts.length - 1] ?? "";
     }
   },
 });

@@ -95,60 +95,88 @@ a {
   font-family: "Space Grotesk", sans-serif;
 }
 
-.app-grid {
-  display: grid;
-  grid-template-columns: minmax(150px, 190px) 1fr minmax(300px, 380px);
-  gap: 1rem;
-  align-items: start;
+.app-main {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   padding-top: 0.4rem;
-}
-
-.settings-panel {
   display: flex;
   flex-direction: column;
-  max-height: 100%;
-  overflow: hidden;
-  align-self: stretch;
+}
+
+.customizer-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) 1fr minmax(280px, 340px);
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.settings-scroll-col {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-right: 0.25rem;
+}
+
+.poster-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  padding: 1.25rem;
+}
+
+.settings-print-col {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-scroll {
   display: grid;
   gap: 0.8rem;
-  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-y: scroll;
   flex: 1;
   min-height: 0;
   padding-bottom: 0.5rem;
+  padding-right: 0.5rem;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
+  scrollbar-color: var(--accent) transparent;
 }
 
 .settings-scroll::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .settings-scroll::-webkit-scrollbar-track {
   background: transparent;
+  margin: 0.25rem 0;
 }
 
 .settings-scroll::-webkit-scrollbar-thumb {
-  background: var(--line);
-  border-radius: 3px;
+  background: var(--accent);
+  border-radius: 4px;
 }
 
 .settings-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+  background: var(--accent-strong);
 }
 
 .settings-fixed {
   display: grid;
   gap: 0.8rem;
-  flex-shrink: 0;
-  border-top: 1px solid var(--line);
-  padding-top: 0.8rem;
-  margin-top: 0.8rem;
 }
 
 .panel-block {
@@ -158,6 +186,7 @@ a {
   padding: 0.95rem;
   display: grid;
   gap: 0.8rem;
+  min-width: 0;
 }
 
 .panel-block h2 {
@@ -712,19 +741,8 @@ button.ghost {
   display: contents;
 }
 
-.edit-controls-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  padding: 0.8rem;
-  box-shadow: var(--shadow);
-  overflow-y: auto;
-  max-height: 100%;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
+.edit-mode-row {
+  margin-bottom: 0.5rem;
 }
 
 .poster-viewport {
@@ -733,9 +751,8 @@ button.ghost {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
   align-self: stretch;
-  padding: 1rem 0;
 }
 
 .poster-frame {
@@ -1088,25 +1105,25 @@ button.ghost {
     overflow: visible;
   }
 
-  .app-grid {
+  .customizer-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
     overflow: visible;
   }
 
-  .edit-controls-panel {
-    flex-direction: row;
-    flex-wrap: wrap;
-    max-height: none;
-    overflow-y: visible;
+  .settings-scroll-col {
+    order: 1;
+    max-height: 40vh;
+    overflow-y: auto;
   }
 
-  .edit-controls-panel .map-control-group {
-    flex-direction: row;
-    flex-wrap: wrap;
+  .poster-col {
+    order: 2;
+    min-height: 280px;
   }
 
-  .edit-controls-panel .map-control-hint {
-    flex-basis: 100%;
+  .settings-print-col {
+    order: 3;
   }
 
   .poster-frame {
@@ -1114,19 +1131,8 @@ button.ghost {
     width: 100%;
   }
 
-  .settings-panel {
-    max-height: none;
-    overflow: visible;
-  }
-
   .settings-scroll {
     overflow: visible;
-  }
-
-  .settings-fixed {
-    border-top: none;
-    padding-top: 0;
-    margin-top: 0;
   }
 
   .size-grid {

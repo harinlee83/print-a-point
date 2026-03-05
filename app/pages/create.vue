@@ -9,11 +9,7 @@
       <div class="create-header-end"></div>
     </header>
 
-    <main class="app-grid">
-      <PosterPreview
-        ref="previewRef"
-        @map-ready="onMapReady"
-      />
+    <main class="app-main">
       <PreviewModal
         :open="previewModalOpen"
         :image-url="previewImageUrl"
@@ -27,7 +23,12 @@
         @download-svg="handleDownloadSvg"
         @share="handleShare"
         @show-preview="openPreviewModal"
-      />
+      >
+        <PosterPreview
+          ref="previewRef"
+          @map-ready="onMapReady"
+        />
+      </CustomizerPanel>
     </main>
   </div>
 </template>
