@@ -15,7 +15,7 @@ import {
   isLatinScript,
 } from "./textLayout";
 import type { ResolvedTheme } from "~/lib/theme/types";
-import { resolveTextPreset } from "~/lib/text/textPresets";
+import { resolveTextPreset, type TextPreset } from "~/lib/text/textPresets";
 
 export interface DrawTypographyInput {
   width: number;
@@ -35,6 +35,11 @@ export interface DrawTypographyInput {
   textSpacing?: number;
   textOffsetX?: number;
   textOffsetY?: number;
+  resolvedPreset?: TextPreset;
+  titleFontFamily?: string;
+  subtitleFontFamily?: string;
+  coordsFontFamily?: string;
+  dividerLength?: number | null;
 }
 
 export function drawPosterText(
@@ -59,20 +64,31 @@ export function drawPosterText(
     textSpacing = 1,
     textOffsetX = 0,
     textOffsetY = 0,
+    resolvedPreset,
+    titleFontFamily: titleFontFamilyOverride,
+    subtitleFontFamily: subtitleFontFamilyOverride,
+    coordsFontFamily: coordsFontFamilyOverride,
+    dividerLength,
   } = input;
 
   if (!showTitle && !showDivider && !showSubtitle && !showCoordinates) {
     return;
   }
 
-  const preset = resolveTextPreset(textPresetId);
+  const preset = resolvedPreset ?? resolveTextPreset(textPresetId);
 
   const textColor = theme.ui.text || "#111111";
-  const titleFontFamily = fontFamily
-    ? `"${fontFamily}", "Space Grotesk", sans-serif`
+  const titleFamily = titleFontFamilyOverride || fontFamily;
+  const subtitleFamily = subtitleFontFamilyOverride || fontFamily;
+  const coordsFamily = coordsFontFamilyOverride || fontFamily;
+  const titleFontFamily = titleFamily
+    ? `"${titleFamily}", "Space Grotesk", sans-serif`
     : '"Space Grotesk", sans-serif';
-  const bodyFontFamily = fontFamily
-    ? `"${fontFamily}", "IBM Plex Mono", monospace`
+  const subtitleFontFamily = subtitleFamily
+    ? `"${subtitleFamily}", "Space Grotesk", sans-serif`
+    : '"Space Grotesk", sans-serif';
+  const bodyFontFamily = coordsFamily
+    ? `"${coordsFamily}", "IBM Plex Mono", monospace`
     : '"IBM Plex Mono", monospace';
 
   const dimScale = Math.max(
@@ -139,11 +155,12 @@ export function drawPosterText(
   }
 
   if (showDivider) {
+    const halfLen = dividerLength != null ? (width * dividerLength) / 2 : width * 0.1;
     ctx.strokeStyle = textColor;
     ctx.lineWidth = 3 * dimScale;
     ctx.beginPath();
-    ctx.moveTo(centerX - width * 0.1, lineY);
-    ctx.lineTo(centerX + width * 0.1, lineY);
+    ctx.moveTo(centerX - halfLen, lineY);
+    ctx.lineTo(centerX + halfLen, lineY);
     ctx.stroke();
   }
 
@@ -151,7 +168,7 @@ export function drawPosterText(
     const countryText = preset.countryTransform === "uppercase"
       ? country.toUpperCase()
       : country;
-    ctx.font = `${preset.countryWeight} ${countryFontSize}px ${titleFontFamily}`;
+    ctx.font = `${preset.countryWeight} ${countryFontSize}px ${subtitleFontFamily}`;
     ctx.fillText(countryText, centerX, countryY);
   }
 

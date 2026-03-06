@@ -18,6 +18,7 @@ export function useShareConfig() {
     params.set("shape", store.mapShape);
     params.set("distance", String(store.distance));
     params.set("bearing", String(store.mapBearing));
+    params.set("pitch", String(store.mapPitch));
     params.set("size", store.selectedSizeId);
     params.set("productType", store.selectedProductType);
     if (store.needsFrameSelection) {
@@ -79,6 +80,11 @@ export function useShareConfig() {
     const bearing = Number(q.bearing);
     if (Number.isFinite(bearing)) {
       store.setMapBearing(bearing);
+    }
+
+    const pitch = Number(q.pitch);
+    if (Number.isFinite(pitch)) {
+      store.setMapPitch(pitch);
     }
 
     const size = String(q.size ?? "").trim();

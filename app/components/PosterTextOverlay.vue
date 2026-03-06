@@ -20,13 +20,14 @@
       :style="{
         borderColor: textColor,
         top: `${dividerYPercent}%`,
+        ...(dividerWidthStyle),
       }"
     />
     <p
       v-if="showSubtitle"
       class="poster-country"
       :style="{
-        fontFamily: titleFont,
+        fontFamily: subtitleFont,
         top: `${countryYPercent}%`,
         fontSize: countryFontSize,
         fontWeight: preset.countryWeight,
@@ -40,10 +41,11 @@
       v-if="showCoordinates"
       class="poster-coords"
       :style="{
-        fontFamily: bodyFont,
+        fontFamily: coordsFont,
         top: `${coordsYPercent}%`,
         fontSize: coordsFontSize,
         fontWeight: preset.coordsWeight,
+        letterSpacing: preset.coordsLetterSpacing || undefined,
       }"
     >
       {{ coordsText }}
@@ -69,7 +71,7 @@ import {
   formatCityLabel,
   isLatinScript,
 } from "~/lib/export/textLayout";
-import { resolveTextPreset } from "~/lib/text/textPresets";
+import type { TextPreset } from "~/lib/text/textPresets";
 
 const props = defineProps<{
   city: string;
@@ -82,39 +84,55 @@ const props = defineProps<{
   showDivider: boolean;
   showSubtitle: boolean;
   showCoordinates: boolean;
-  textPresetId: string;
+  preset: TextPreset;
   mapShapeId: string;
   coordinates: string;
   textSpacing?: number;
+  titleFontFamily?: string;
+  subtitleFontFamily?: string;
+  coordsFontFamily?: string;
+  dividerLength?: number | null;
 }>();
-
-const preset = computed(() => resolveTextPreset(props.textPresetId));
 
 const toCqMin = (px: number) => (px / TEXT_DIMENSION_REFERENCE_PX) * 100;
 
-const titleFont = computed(() =>
-  props.fontFamily
-    ? `"${props.fontFamily}", "Space Grotesk", sans-serif`
-    : '"Space Grotesk", sans-serif',
-);
-const bodyFont = computed(() =>
-  props.fontFamily
-    ? `"${props.fontFamily}", "IBM Plex Mono", monospace`
-    : '"IBM Plex Mono", monospace',
-);
+const titleFont = computed(() => {
+  const family = props.titleFontFamily || props.fontFamily;
+  return family
+    ? `"${family}", "Space Grotesk", sans-serif`
+    : '"Space Grotesk", sans-serif';
+});
+const subtitleFont = computed(() => {
+  const family = props.subtitleFontFamily || props.fontFamily;
+  return family
+    ? `"${family}", "Space Grotesk", sans-serif`
+    : '"Space Grotesk", sans-serif';
+});
+const coordsFont = computed(() => {
+  const family = props.coordsFontFamily || props.fontFamily;
+  return family
+    ? `"${family}", "IBM Plex Mono", monospace`
+    : '"IBM Plex Mono", monospace';
+});
+
+const dividerWidthStyle = computed(() => {
+  if (props.dividerLength == null) return {};
+  const pct = props.dividerLength * 100;
+  return { width: `${pct}%`, left: `${(100 - pct) / 2}%` };
+});
 
 const cityLabel = computed(() => {
-  if (preset.value.useWideSpacing) {
+  if (props.preset.useWideSpacing) {
     return formatCityLabel(props.city);
   }
-  if (preset.value.cityTransform === "uppercase") {
+  if (props.preset.cityTransform === "uppercase") {
     return props.city.toUpperCase();
   }
   return props.city;
 });
 
 const countryLabel = computed(() => {
-  if (preset.value.countryTransform === "uppercase") {
+  if (props.preset.countryTransform === "uppercase") {
     return props.country.toUpperCase();
   }
   return props.country;
@@ -155,7 +173,7 @@ const cityFontSize = computed(() => {
   const threshold = isLatinScript(props.city)
     ? CITY_TEXT_SHRINK_THRESHOLD_LATIN
     : CITY_TEXT_SHRINK_THRESHOLD;
-  const cityBaseSize = toCqMin(CITY_FONT_BASE_PX * preset.value.citySizeScale);
+  const cityBaseSize = toCqMin(CITY_FONT_BASE_PX * props.preset.citySizeScale);
   const cityMinSize = toCqMin(CITY_FONT_MIN_PX);
   if (cityLen > threshold) {
     return `${Math.max(
@@ -167,9 +185,9 @@ const cityFontSize = computed(() => {
 });
 
 const countryFontSize = computed(
-  () => `${toCqMin(COUNTRY_FONT_BASE_PX * preset.value.countrySizeScale)}cqmin`,
+  () => `${toCqMin(COUNTRY_FONT_BASE_PX * props.preset.countrySizeScale)}cqmin`,
 );
 const coordsFontSize = computed(
-  () => `${toCqMin(COORDS_FONT_BASE_PX * preset.value.coordsSizeScale)}cqmin`,
+  () => `${toCqMin(COORDS_FONT_BASE_PX * props.preset.coordsSizeScale)}cqmin`,
 );
 </script>

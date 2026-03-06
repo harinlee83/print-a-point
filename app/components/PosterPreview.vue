@@ -71,10 +71,14 @@
             :show-divider="store.showDivider"
             :show-subtitle="store.showSubtitle"
             :show-coordinates="store.showCoordinates"
-            :text-preset-id="store.textPresetId"
+            :preset="store.effectiveTextPreset"
             :map-shape-id="store.mapShape"
             :coordinates="store.displayCoordinates"
             :text-spacing="store.textSpacing"
+            :title-font-family="store.titleFontFamily"
+            :subtitle-font-family="store.subtitleFontFamily"
+            :coords-font-family="store.coordsFontFamily"
+            :divider-length="store.dividerLength"
           />
         </div>
         <div
@@ -373,13 +377,15 @@ watch(
 );
 
 watch(
-  () => store.fontFamily,
-  async (family) => {
-    if (!family.trim()) return;
-    try {
-      await ensureGoogleFont(family.trim());
-    } catch {
-      // Ignore font loading failures; fallback stack remains in place.
+  () => [store.fontFamily, store.titleFontFamily, store.subtitleFontFamily, store.coordsFontFamily],
+  async (families) => {
+    for (const family of families) {
+      if (!family?.trim()) continue;
+      try {
+        await ensureGoogleFont(family.trim());
+      } catch {
+        // Ignore font loading failures; fallback stack remains in place.
+      }
     }
   },
   { immediate: true },
@@ -404,6 +410,14 @@ watch(
   (bearing) => {
     if (!mapRef.value) return;
     mapRef.value.rotateTo(bearing, { duration: MAP_BUTTON_ZOOM_DURATION_MS });
+  },
+);
+
+watch(
+  () => store.mapPitch,
+  (pitch) => {
+    if (!mapRef.value) return;
+    mapRef.value.easeTo({ pitch, duration: MAP_BUTTON_ZOOM_DURATION_MS });
   },
 );
 

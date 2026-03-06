@@ -8,8 +8,9 @@
     </header>
 
     <main class="home-main">
+      <div class="home-fold">
       <!-- Carousel row 1 -->
-      <div class="home-carousel-section">
+      <div class="home-carousel-section home-carousel-section--top">
         <div class="home-carousel" aria-label="Poster gallery row 1">
           <div class="home-carousel-track">
             <NuxtLink
@@ -34,7 +35,6 @@
           <p class="home-hero-subtext">unlimited designs completely for free</p>
         </div>
         <NuxtLink class="home-cta" to="/create">Start Designing</NuxtLink>
-        <p class="home-trust-text">Museum-quality prints. Shipped worldwide. Powered by Printful.</p>
       </section>
 
       <!-- Carousel row 2 -->
@@ -55,13 +55,14 @@
           </div>
         </div>
       </div>
+      </div>
 
       <!-- FAQ -->
       <FaqSection />
 
       <!-- Bottom CTA -->
       <section class="home-bottom">
-        <p>Your place. Your story. Your wall.</p>
+        <p>Museum-quality prints. Shipped worldwide. Powered by Printful.</p>
         <NuxtLink class="home-cta" to="/create">Create Your Map</NuxtLink>
       </section>
     </main>

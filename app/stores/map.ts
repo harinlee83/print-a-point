@@ -18,7 +18,7 @@ import { generateMapStyle } from "~/lib/map/maplibreStyle";
 import type { SearchResult } from "~/lib/location/nominatim";
 import { getPinStyleById, PIN_SIZE_MIN, PIN_SIZE_MAX } from "~/lib/pin/pinStyles";
 import { getMapShapeById, DEFAULT_MAP_SHAPE_ID } from "~/lib/shapes/mapShapes";
-import { getTextPresetById, DEFAULT_TEXT_PRESET_ID } from "~/lib/text/textPresets";
+import { getTextPresetById, resolveTextPreset, DEFAULT_TEXT_PRESET_ID, type TextPreset } from "~/lib/text/textPresets";
 
 export const DEFAULT_LAT = 52.3759;
 export const DEFAULT_LON = 9.732;
@@ -56,10 +56,26 @@ export const useMapStore = defineStore("map", {
     mapShapeOffsetY: 0,
     shapeBackgroundColor: "",
     mapBearing: 0,
+    mapPitch: 0,
     textPresetId: DEFAULT_TEXT_PRESET_ID,
     textSpacing: 1,
     textOffsetX: 0,
     textOffsetY: 0,
+
+    // Per-element typography overrides (null/empty = use text preset default)
+    titleFontFamily: "" as string,
+    titleSizeScale: null as number | null,
+    titleWeight: null as number | null,
+    titleLetterSpacing: null as string | null,
+    subtitleFontFamily: "" as string,
+    subtitleSizeScale: null as number | null,
+    subtitleWeight: null as number | null,
+    subtitleLetterSpacing: null as string | null,
+    coordsFontFamily: "" as string,
+    coordsSizeScale: null as number | null,
+    coordsWeight: null as number | null,
+    coordsLetterSpacing: null as string | null,
+    dividerLength: null as number | null,
 
     showPin: false,
     pinStyleId: "classic",
@@ -147,6 +163,22 @@ export const useMapStore = defineStore("map", {
 
     showAnyText(state): boolean {
       return state.showTitle || state.showDivider || state.showSubtitle || state.showCoordinates;
+    },
+
+    effectiveTextPreset(state): TextPreset {
+      const base = resolveTextPreset(state.textPresetId);
+      return {
+        ...base,
+        ...(state.titleSizeScale != null && { citySizeScale: state.titleSizeScale }),
+        ...(state.titleWeight != null && { cityWeight: state.titleWeight }),
+        ...(state.titleLetterSpacing != null && { cityLetterSpacing: state.titleLetterSpacing }),
+        ...(state.subtitleSizeScale != null && { countrySizeScale: state.subtitleSizeScale }),
+        ...(state.subtitleWeight != null && { countryWeight: state.subtitleWeight }),
+        ...(state.subtitleLetterSpacing != null && { countryLetterSpacing: state.subtitleLetterSpacing }),
+        ...(state.coordsSizeScale != null && { coordsSizeScale: state.coordsSizeScale }),
+        ...(state.coordsWeight != null && { coordsWeight: state.coordsWeight }),
+        ...(state.coordsLetterSpacing != null && { coordsLetterSpacing: state.coordsLetterSpacing }),
+      };
     },
 
     mapCenter(state): [number, number] {
@@ -271,12 +303,31 @@ export const useMapStore = defineStore("map", {
       this.mapBearing = Math.max(-180, Math.min(180, bearing));
     },
 
+    setMapPitch(pitch: number) {
+      if (!Number.isFinite(pitch)) return;
+      this.mapPitch = Math.max(0, Math.min(85, pitch));
+    },
+
     setTextPreset(presetId: string) {
       const preset = getTextPresetById(presetId);
       if (!preset) return;
       this.textPresetId = presetId;
       this.fontFamily = preset.fontFamily;
       this.showDivider = preset.showDividerDefault;
+      // Reset per-element overrides
+      this.titleFontFamily = "";
+      this.titleSizeScale = null;
+      this.titleWeight = null;
+      this.titleLetterSpacing = null;
+      this.subtitleFontFamily = "";
+      this.subtitleSizeScale = null;
+      this.subtitleWeight = null;
+      this.subtitleLetterSpacing = null;
+      this.coordsFontFamily = "";
+      this.coordsSizeScale = null;
+      this.coordsWeight = null;
+      this.coordsLetterSpacing = null;
+      this.dividerLength = null;
     },
 
     setTextSpacing(value: number) {

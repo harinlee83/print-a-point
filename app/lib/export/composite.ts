@@ -2,6 +2,7 @@ import { applyFades } from "./layers";
 import { drawPin } from "./pin";
 import { drawPosterText } from "./typography";
 import type { ResolvedTheme } from "~/lib/theme/types";
+import type { TextPreset } from "~/lib/text/textPresets";
 import { getScaledCanvasClipPath } from "~/lib/shapes/mapShapes";
 
 export interface CompositeOptions {
@@ -31,6 +32,11 @@ export interface CompositeOptions {
   textOffsetX?: number;
   textOffsetY?: number;
   showWatermark?: boolean;
+  resolvedPreset?: TextPreset;
+  titleFontFamily?: string;
+  subtitleFontFamily?: string;
+  coordsFontFamily?: string;
+  dividerLength?: number | null;
 }
 
 export function compositeExport(
@@ -103,6 +109,11 @@ export function compositeExport(
     textSpacing: options.textSpacing ?? 1,
     textOffsetX: options.textOffsetX ?? 0,
     textOffsetY: options.textOffsetY ?? 0,
+    resolvedPreset: options.resolvedPreset,
+    titleFontFamily: options.titleFontFamily,
+    subtitleFontFamily: options.subtitleFontFamily,
+    coordsFontFamily: options.coordsFontFamily,
+    dividerLength: options.dividerLength,
   });
 
   if (options.showWatermark) {

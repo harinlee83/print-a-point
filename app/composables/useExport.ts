@@ -19,8 +19,11 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     store.clearError();
 
     try {
-      if (store.showAnyText && store.fontFamily.trim()) {
-        await ensureGoogleFont(store.fontFamily.trim());
+      if (store.showAnyText) {
+        const fonts = [store.fontFamily, store.titleFontFamily, store.subtitleFontFamily, store.coordsFontFamily];
+        for (const f of fonts) {
+          if (f?.trim()) await ensureGoogleFont(f.trim());
+        }
       }
 
       const size = store.selectedSize;
@@ -57,6 +60,11 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         textOffsetX: store.textOffsetX,
         textOffsetY: store.textOffsetY,
         showWatermark: opts?.showWatermark,
+        resolvedPreset: store.effectiveTextPreset,
+        titleFontFamily: store.titleFontFamily || undefined,
+        subtitleFontFamily: store.subtitleFontFamily || undefined,
+        coordsFontFamily: store.coordsFontFamily || undefined,
+        dividerLength: store.dividerLength,
       });
 
       if (
@@ -100,8 +108,11 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     store.clearError();
 
     try {
-      if (store.showAnyText && store.fontFamily.trim()) {
-        await ensureGoogleFont(store.fontFamily.trim());
+      if (store.showAnyText) {
+        const fonts = [store.fontFamily, store.titleFontFamily, store.subtitleFontFamily, store.coordsFontFamily];
+        for (const f of fonts) {
+          if (f?.trim()) await ensureGoogleFont(f.trim());
+        }
       }
 
       const size = store.selectedSize;
@@ -138,6 +149,11 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         textOffsetX: store.textOffsetX,
         textOffsetY: store.textOffsetY,
         showWatermark: opts?.showWatermark,
+        resolvedPreset: store.effectiveTextPreset,
+        titleFontFamily: store.titleFontFamily || undefined,
+        subtitleFontFamily: store.subtitleFontFamily || undefined,
+        coordsFontFamily: store.coordsFontFamily || undefined,
+        dividerLength: store.dividerLength,
       });
 
       const dataUrl = finalCanvas.toDataURL("image/png");

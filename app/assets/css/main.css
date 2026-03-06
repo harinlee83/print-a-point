@@ -483,6 +483,176 @@ button:focus-visible {
   padding: 0;
 }
 
+/* ── Theme Colors Expandable ── */
+
+.theme-colors-expandable {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.theme-colors-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.5rem 0.65rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--muted);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-colors-toggle:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+.theme-colors-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.theme-colors-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.theme-colors-body {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.theme-colors-reset {
+  justify-self: center;
+}
+
+/* ── Typography Toggle Groups ── */
+
+.typography-toggles {
+  gap: 0 !important;
+}
+
+.typography-toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0;
+}
+
+.typography-toggle-group:not(:first-child) {
+  border-top: 1px solid var(--line);
+}
+
+.typography-toggle-group .toggle-field {
+  flex: 1;
+  margin: 0;
+}
+
+.typography-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--muted);
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.typography-expand-btn:hover {
+  color: var(--ink);
+}
+
+.typography-settings {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.5rem 0.75rem;
+  border-left: 2px solid var(--line);
+  margin-left: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* ── Theme Carousel ── */
+
+.theme-carousel-track-wrap {
+  min-width: 0;
+  margin: 0 -0.95rem;
+}
+
+.theme-carousel-track {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 0.25rem 0.95rem;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+}
+
+.theme-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.theme-carousel-item {
+  flex: 0 0 auto;
+  width: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  background: transparent;
+  padding: 0.3rem;
+  border-radius: 8px;
+  cursor: pointer;
+  scroll-snap-align: center;
+  transition: opacity 0.15s ease;
+  opacity: 0.6;
+}
+
+.theme-carousel-item:hover {
+  opacity: 0.85;
+}
+
+.theme-carousel-item.is-active {
+  opacity: 1;
+}
+
+.theme-carousel-thumb {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: border-color 0.15s ease;
+}
+
+.theme-carousel-item.is-active .theme-carousel-thumb {
+  border-color: var(--accent);
+}
+
+.theme-carousel-name {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theme-carousel-item.is-active .theme-carousel-name {
+  color: var(--ink);
+}
+
 /* ── Product Type Selector ── */
 
 .product-type-grid {
@@ -1599,6 +1769,65 @@ button.ghost {
 
   to {
     transform: translateX(0);
+  }
+}
+
+/* ── Above-the-fold viewport fit ── */
+
+.home-fold {
+  height: calc(100dvh - 56px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.home-fold > .home-carousel-section {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 340px;
+  padding: 0;
+}
+
+.home-fold > .home-carousel-section--top {
+  padding-top: 1rem;
+}
+
+.home-fold > .home-carousel-section:last-of-type {
+  padding-bottom: 1rem;
+}
+
+.home-fold > .home-hero {
+  flex: 0 0 auto;
+  padding: 1rem 0 0.75rem;
+}
+
+.home-fold .home-hero-copy h1 {
+  font-size: clamp(1.8rem, 1.2rem + 2.5vw, 3.2rem);
+}
+
+.home-fold .home-hero-copy {
+  gap: 0.6rem;
+}
+
+.home-fold .home-carousel {
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+}
+
+.home-fold .home-carousel-card {
+  width: auto;
+  aspect-ratio: 3 / 4;
+}
+
+.home-fold .home-carousel-card img {
+  width: auto;
+  height: 100%;
+}
+
+@media (max-height: 700px) {
+  .home-carousel-section--top {
+    display: none;
   }
 }
 

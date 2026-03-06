@@ -23,6 +23,8 @@ export interface TextPreset {
   countrySizeScale: number;
   /** Font size scale multiplier for coordinates relative to base. */
   coordsSizeScale: number;
+  /** CSS letter-spacing for coordinates. */
+  coordsLetterSpacing?: string;
   /** Whether to use wide character-spaced formatting for city (classic style). */
   useWideSpacing: boolean;
   /** Whether divider is shown by default when this preset is selected. */
