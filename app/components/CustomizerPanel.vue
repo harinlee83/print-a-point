@@ -80,7 +80,11 @@
       </label>
       <label>Theme</label>
       <div class="theme-carousel-track-wrap">
-        <div ref="themeTrackRef" class="theme-carousel-track">
+        <div
+          ref="themeTrackRef"
+          class="theme-carousel-track"
+          @scroll.passive="updateThemeScrollState"
+        >
           <button
             v-for="(t, idx) in allThemePreviews"
             :key="t.id"
@@ -109,6 +113,28 @@
             <span class="theme-carousel-name">{{ t.name }}</span>
           </button>
         </div>
+        <button
+          type="button"
+          class="theme-carousel-arrow arrow-left"
+          :disabled="!canScrollThemePrev"
+          aria-label="Scroll themes left"
+          @click="scrollThemeCarousel('prev')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="theme-carousel-arrow arrow-right"
+          :disabled="!canScrollThemeNext"
+          aria-label="Scroll themes right"
+          @click="scrollThemeCarousel('next')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
       </div>
 
       <div class="theme-colors-expandable">
@@ -691,7 +717,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick, onMounted } from "vue";
+import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
 import SizeSelector from "~/components/SizeSelector.vue";
 import ProductTypeSelector from "~/components/ProductTypeSelector.vue";
 import FrameColorSelector from "~/components/FrameColorSelector.vue";
@@ -763,6 +789,35 @@ const allThemePreviews = computed(() =>
 
 const themeTrackRef = ref<HTMLElement | null>(null);
 const themeItemRefs = ref<Record<number, HTMLElement>>({});
+const canScrollThemePrev = ref(false);
+const canScrollThemeNext = ref(false);
+
+function updateThemeScrollState() {
+  const track = themeTrackRef.value;
+  if (!track) {
+    canScrollThemePrev.value = false;
+    canScrollThemeNext.value = false;
+    return;
+  }
+
+  const maxScrollLeft = Math.max(0, track.scrollWidth - track.clientWidth);
+  canScrollThemePrev.value = track.scrollLeft > 2;
+  canScrollThemeNext.value = track.scrollLeft < maxScrollLeft - 2;
+}
+
+function scrollThemeCarousel(direction: "prev" | "next") {
+  const track = themeTrackRef.value;
+  if (!track) return;
+
+  const firstItem = themeItemRefs.value[0];
+  const itemWidth = firstItem?.offsetWidth ?? 62;
+  const scrollBy = (itemWidth + 8) * 2;
+  const nextLeft = direction === "prev"
+    ? track.scrollLeft - scrollBy
+    : track.scrollLeft + scrollBy;
+
+  track.scrollTo({ left: nextLeft, behavior: "smooth" });
+}
 
 function scrollToActiveTheme() {
   const idx = themeOptions.findIndex((t) => t.id === store.selectedThemeId);
@@ -770,10 +825,22 @@ function scrollToActiveTheme() {
   if (el && themeTrackRef.value) {
     el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }
+
+  window.setTimeout(updateThemeScrollState, 180);
 }
 
 watch(() => store.selectedThemeId, () => nextTick(scrollToActiveTheme));
-onMounted(() => nextTick(scrollToActiveTheme));
+onMounted(() => {
+  nextTick(() => {
+    scrollToActiveTheme();
+    updateThemeScrollState();
+  });
+  window.addEventListener("resize", updateThemeScrollState);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateThemeScrollState);
+});
 
 const productTypeModel = computed<ProductTypeId>({
   get: () => store.selectedProductType,

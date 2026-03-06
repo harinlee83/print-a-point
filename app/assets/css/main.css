@@ -581,7 +581,7 @@ button:focus-visible {
 
 .theme-carousel-track-wrap {
   min-width: 0;
-  margin: 0 -0.95rem;
+  position: relative;
 }
 
 .theme-carousel-track {
@@ -589,14 +589,56 @@ button:focus-visible {
   gap: 0.5rem;
   overflow-x: auto;
   scroll-snap-type: x proximity;
-  padding: 0.25rem 0.95rem;
+  padding: 0.25rem 0.15rem;
   scrollbar-width: none;
-  mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+  --theme-carousel-thumb-height: 80px;
 }
 
 .theme-carousel-track::-webkit-scrollbar {
   display: none;
+}
+
+.theme-carousel-arrow {
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  background: rgba(30, 27, 23, 0.7);
+  width: 2rem;
+  height: 2rem;
+  position: absolute;
+  top: calc((var(--theme-carousel-thumb-height, 80px) / 2) + 0.25rem);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.theme-carousel-arrow:hover:not(:disabled) {
+  color: var(--accent-strong);
+  border-color: rgba(255, 255, 255, 1);
+  background: rgba(30, 27, 23, 1);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.theme-carousel-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.theme-carousel-arrow svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.theme-carousel-arrow.arrow-left {
+  left: -0.35rem;
+}
+
+.theme-carousel-arrow.arrow-right {
+  right: -0.35rem;
 }
 
 .theme-carousel-item {
@@ -644,9 +686,8 @@ button:focus-visible {
   text-align: center;
   line-height: 1.2;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .theme-carousel-item.is-active .theme-carousel-name {
