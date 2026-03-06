@@ -5,11 +5,13 @@ import { captureMapAsCanvas } from "~/lib/export/mapExporter";
 import { compositeExport } from "~/lib/export/composite";
 import { createPosterFilename } from "~/lib/export/filename";
 import { ensureGoogleFont } from "~/lib/utils/fonts";
+import { getTheme, themeOptions } from "~/lib/theme/themeRepository";
+import { generateMapStyle } from "~/lib/map/maplibreStyle";
 
 export function useExport(mapRef: Ref<MapLibreMap | null>) {
   const store = useMapStore();
 
-  const exportMapPng = async (opts?: { showWatermark?: boolean }): Promise<{ blob: Blob; filename: string }> => {
+  const exportMapPng = async (opts?: { showWatermark?: boolean; themeId?: string }): Promise<{ blob: Blob; filename: string }> => {
     const map = mapRef.value;
     if (!map) {
       throw new Error("Map is not ready yet.");
@@ -26,15 +28,31 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         }
       }
 
+      const targetThemeId = opts?.themeId || store.selectedThemeId;
+      const effectiveTheme = opts?.themeId
+        ? getTheme(opts.themeId)
+        : store.effectiveTheme;
+
+      let styleOverride;
+      if (opts?.themeId) {
+        styleOverride = generateMapStyle(effectiveTheme, {
+          includeBuildings: store.includeBuildings,
+          includeWater: store.includeWater,
+          includeParks: store.includeParks,
+          distanceMeters: store.distance,
+        });
+      }
+
       const size = store.selectedSize;
       const mapCanvas = await captureMapAsCanvas(
         map,
         size.targetWidthPx,
         size.targetHeightPx,
+        styleOverride,
       );
 
       const finalCanvas = compositeExport(mapCanvas, {
-        theme: store.effectiveTheme,
+        theme: effectiveTheme,
         center: { lat: store.latitude, lon: store.longitude },
         displayCity: store.displayCity || store.location,
         displayCountry: store.displayCountry,
@@ -88,7 +106,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
 
       const filename = createPosterFilename(
         store.displayCity || store.location,
-        store.selectedThemeId,
+        targetThemeId,
         "png",
       );
 
@@ -98,7 +116,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     }
   };
 
-  const exportMapSvg = async (opts?: { showWatermark?: boolean }): Promise<{ blob: Blob; filename: string }> => {
+  const exportMapSvg = async (opts?: { showWatermark?: boolean; themeId?: string }): Promise<{ blob: Blob; filename: string }> => {
     const map = mapRef.value;
     if (!map) {
       throw new Error("Map is not ready yet.");
@@ -115,15 +133,31 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         }
       }
 
+      const targetThemeId = opts?.themeId || store.selectedThemeId;
+      const effectiveTheme = opts?.themeId
+        ? getTheme(opts.themeId)
+        : store.effectiveTheme;
+
+      let styleOverride;
+      if (opts?.themeId) {
+        styleOverride = generateMapStyle(effectiveTheme, {
+          includeBuildings: store.includeBuildings,
+          includeWater: store.includeWater,
+          includeParks: store.includeParks,
+          distanceMeters: store.distance,
+        });
+      }
+
       const size = store.selectedSize;
       const mapCanvas = await captureMapAsCanvas(
         map,
         size.targetWidthPx,
         size.targetHeightPx,
+        styleOverride,
       );
 
       const finalCanvas = compositeExport(mapCanvas, {
-        theme: store.effectiveTheme,
+        theme: effectiveTheme,
         center: { lat: store.latitude, lon: store.longitude },
         displayCity: store.displayCity || store.location,
         displayCountry: store.displayCountry,
@@ -162,7 +196,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
       const blob = new Blob([svg], { type: "image/svg+xml" });
       const filename = createPosterFilename(
         store.displayCity || store.location,
-        store.selectedThemeId,
+        targetThemeId,
         "svg",
       );
 
@@ -200,10 +234,52 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     }
   };
 
+  const downloadAllPngs = async () => {
+    store.setIsExporting(true);
+    try {
+      for (const theme of themeOptions) {
+        const { blob, filename } = await exportMapPng({ showWatermark: true, themeId: theme.id });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    } catch (err) {
+      store.setError(err instanceof Error ? err.message : "Export failed.");
+    } finally {
+      store.setIsExporting(false);
+    }
+  };
+
+  const downloadAllSvgs = async () => {
+    store.setIsExporting(true);
+    try {
+      for (const theme of themeOptions) {
+        const { blob, filename } = await exportMapSvg({ showWatermark: true, themeId: theme.id });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    } catch (err) {
+      store.setError(err instanceof Error ? err.message : "Export failed.");
+    } finally {
+      store.setIsExporting(false);
+    }
+  };
+
   return {
     exportMapPng,
     exportMapSvg,
     downloadPng,
     downloadSvg,
+    downloadAllPngs,
+    downloadAllSvgs,
   };
 }

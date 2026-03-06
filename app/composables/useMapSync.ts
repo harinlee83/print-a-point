@@ -36,7 +36,7 @@ export function zoomToDistance(
     (EARTH_CIRCUMFERENCE_M * cosLat * containerPx) /
     (Math.pow(2, zoom) * TILE_SIZE_PX);
 
-  return clamp(Math.round(fullWidth / 2), 1_000, 20_000_000);
+  return clamp(Math.round(fullWidth / 2), 100, 20_000_000);
 }
 
 function resolveZoomBounds(
@@ -44,7 +44,7 @@ function resolveZoomBounds(
   containerPx: number,
 ): { minZoom: number; maxZoom: number } {
   const minZoomFromDistance = distanceToZoom(20_000_000, latDeg, containerPx);
-  const maxZoomFromDistance = distanceToZoom(1_000, latDeg, containerPx);
+  const maxZoomFromDistance = distanceToZoom(100, latDeg, containerPx);
 
   return {
     minZoom: Math.min(minZoomFromDistance, maxZoomFromDistance),

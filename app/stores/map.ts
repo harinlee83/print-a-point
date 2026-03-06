@@ -93,7 +93,7 @@ export const useMapStore = defineStore("map", {
     isHydratingLocation: false,
 
     /** Edit mode: none | map | shape | text | pin */
-    editMode: "none" as "none" | "map" | "shape" | "text" | "pin",
+    editMode: "map" as "none" | "map" | "shape" | "text" | "pin",
 
     error: "",
   }),
@@ -253,7 +253,7 @@ export const useMapStore = defineStore("map", {
       if (!Number.isFinite(distance)) {
         return;
       }
-      this.distance = Math.max(1_000, Math.min(Math.round(distance), 20_000_000));
+      this.distance = Math.max(100, Math.min(Math.round(distance), 20_000_000));
     },
 
     applyLocationResult(location: SearchResult) {

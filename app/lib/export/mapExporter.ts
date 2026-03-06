@@ -35,6 +35,7 @@ export async function captureMapAsCanvas(
   map: MaplibreMap,
   exportWidth: number,
   exportHeight: number,
+  styleOverride?: StyleSpecification,
 ): Promise<HTMLCanvasElement> {
   await waitForMapIdle(map);
 
@@ -52,7 +53,7 @@ export async function captureMapAsCanvas(
   const zoom = map.getZoom();
   const pitch = map.getPitch();
   const bearing = map.getBearing();
-  const style = map.getStyle() as StyleSpecification;
+  const style = styleOverride ?? (map.getStyle() as StyleSpecification);
   const widthScale = Math.max(exportWidth / previewWidth, 1);
   const heightScale = Math.max(exportHeight / previewHeight, 1);
   const basePixelRatio = Math.max(widthScale, heightScale, 1);

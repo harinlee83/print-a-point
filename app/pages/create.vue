@@ -21,6 +21,8 @@
         @location-selected="handleLocationSelected"
         @download-png="handleDownloadPng"
         @download-svg="handleDownloadSvg"
+        @download-all-png="handleDownloadAllPng"
+        @download-all-svg="handleDownloadAllSvg"
         @share="handleShare"
         @show-preview="openPreviewModal"
       >
@@ -51,7 +53,7 @@ const { copyShareUrl, applyFromUrl } = useShareConfig();
 const previewRef = ref<InstanceType<typeof PosterPreview> | null>(null);
 const mapRef = ref<MapLibreMap | null>(null);
 
-const { exportMapPng, downloadPng, downloadSvg } = useExport(mapRef);
+const { exportMapPng, downloadPng, downloadSvg, downloadAllPngs, downloadAllSvgs } = useExport(mapRef);
 
 const onMapReady = (map: MapLibreMap) => {
   mapRef.value = map;
@@ -67,6 +69,14 @@ const handleDownloadPng = () => {
 
 const handleDownloadSvg = () => {
   void downloadSvg();
+};
+
+const handleDownloadAllPng = () => {
+  void downloadAllPngs();
+};
+
+const handleDownloadAllSvg = () => {
+  void downloadAllSvgs();
 };
 
 const shareCopied = ref(false);

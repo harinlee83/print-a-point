@@ -166,7 +166,7 @@
             :value="store.distance"
             class="distance-slider-input"
             type="number"
-            min="1000"
+            min="100"
             max="20000000"
             step="100"
             @input="onDistanceInput"
@@ -659,6 +659,7 @@
           class="export-btn"
           :disabled="store.isExporting"
           @click="$emit('download-png')"
+          title="Download PNG (Current Theme)"
         >
           <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -672,6 +673,7 @@
           class="export-btn"
           :disabled="store.isExporting"
           @click="$emit('download-svg')"
+          title="Download SVG (Current Theme)"
         >
           <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -679,6 +681,34 @@
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
           <span>SVG</span>
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="store.isExporting"
+          @click="$emit('download-all-png')"
+          title="Download PNGs for All Themes"
+        >
+          <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>All PNGs</span>
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="store.isExporting"
+          @click="$emit('download-all-svg')"
+          title="Download SVGs for All Themes"
+        >
+          <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>All SVGs</span>
         </button>
         <button
           type="button"
@@ -745,6 +775,8 @@ const emit = defineEmits<{
   "location-selected": [lat: number, lon: number];
   "download-png": [];
   "download-svg": [];
+  "download-all-png": [];
+  "download-all-svg": [];
   share: [];
   "show-preview": [];
 }>();
@@ -929,18 +961,19 @@ function selectLocation(suggestion: SearchResult) {
 }
 
 function distanceToSliderValue(distanceMeters: number) {
-  const minLog = Math.log(1000);
+  const minLog = Math.log(100);
   const maxLog = Math.log(20_000_000);
-  const ratio = (Math.log(Math.max(1000, Math.min(distanceMeters, 20_000_000))) - minLog) / (maxLog - minLog);
+  const ratio = (Math.log(Math.max(100, Math.min(distanceMeters, 20_000_000))) - minLog) / (maxLog - minLog);
   return Math.round(ratio * 1000);
 }
 
 function sliderValueToDistance(sliderValue: number) {
-  const minLog = Math.log(1000);
+  const minLog = Math.log(100);
   const maxLog = Math.log(20_000_000);
   const ratio = sliderValue / 1000;
   const distance = Math.exp(minLog + ratio * (maxLog - minLog));
 
+  if (distance < 2_000) return Math.round(distance / 10) * 10;
   if (distance < 100_000) return Math.round(distance / 100) * 100;
   if (distance < 1_000_000) return Math.round(distance / 1_000) * 1_000;
   if (distance < 10_000_000) return Math.round(distance / 10_000) * 10_000;

@@ -64,7 +64,7 @@ onMounted(async () => {
     style: props.style,
     center: props.center,
     zoom: props.zoom,
-    interactive: false,
+    interactive: props.interactive,
     attributionControl: false,
     canvasContextAttributes: { preserveDrawingBuffer: true },
   });
