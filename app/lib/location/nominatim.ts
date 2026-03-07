@@ -176,7 +176,7 @@ export async function searchLocations(
   }
 
   const normalizedLimit = Math.max(1, Math.min(Math.round(limit), 10));
-  const cacheKey = `printapoint:search:${lookup.toLowerCase()}:${normalizedLimit}`;
+  const cacheKey = `printapoint:search:en:${lookup.toLowerCase()}:${normalizedLimit}`;
   const cached = getCached<SearchResult[]>(cacheKey, SEARCH_TTL_MS);
   if (Array.isArray(cached)) {
     return cached;
@@ -184,7 +184,7 @@ export async function searchLocations(
 
   const url =
     "https://nominatim.openstreetmap.org/search?" +
-    `format=jsonv2&addressdetails=1&limit=${normalizedLimit}&q=${encodeURIComponent(lookup)}`;
+    `format=jsonv2&addressdetails=1&accept-language=en-US&limit=${normalizedLimit}&q=${encodeURIComponent(lookup)}`;
 
   const data = await fetchJson(url);
   const results = parseLocationResponseItems(data);
@@ -202,7 +202,7 @@ export async function reverseGeocode(
 
   const roundedLat = Number(lat.toFixed(4));
   const roundedLon = Number(lon.toFixed(4));
-  const cacheKey = `printapoint:reverse:${roundedLat}:${roundedLon}`;
+  const cacheKey = `printapoint:reverse:en:${roundedLat}:${roundedLon}`;
   const cached = getCached<SearchResult>(cacheKey, REVERSE_TTL_MS);
   if (cached && typeof cached === "object") {
     return cached;
@@ -210,7 +210,7 @@ export async function reverseGeocode(
 
   const url =
     "https://nominatim.openstreetmap.org/reverse?" +
-    `format=jsonv2&addressdetails=1&zoom=10&lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lon))}`;
+    `format=jsonv2&addressdetails=1&accept-language=en-US&zoom=10&lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lon))}`;
 
   const data = await fetchJson(url);
   const normalized = normalizeLocationResult(data as NominatimEntry);

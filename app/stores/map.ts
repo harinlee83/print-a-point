@@ -38,7 +38,7 @@ export const useMapStore = defineStore("map", {
     location: DEFAULT_LOCATION_LABEL,
     latitude: DEFAULT_LAT,
     longitude: DEFAULT_LON,
-    distance: 4_000,
+    distance: 2_000,
 
     displayCity: "Hanover",
     displayCountry: "Germany",
