@@ -1632,12 +1632,12 @@ button.ghost {
   position: relative;
   width: 100vw;
   margin-left: calc(-1 * (100vw - 100%) / 2);
-  height: clamp(600px, 95vh, 1000px);
+  min-height: 100vh;
   background: var(--bg);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2rem;
+  gap: 3vh;
   overflow: hidden;
 }
 
