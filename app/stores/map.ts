@@ -51,6 +51,7 @@ export const useMapStore = defineStore("map", {
     selectedFrameColor: "black" as FrameColorId,
     selectedSizeId: DEFAULT_POSTER_SIZE_ID,
     selectedAspectRatioId: DEFAULT_ASPECT_RATIO_ID,
+    selectedOrientation: "portrait" as "portrait" | "landscape",
     selectedPngResolutionId: DEFAULT_PNG_RESOLUTION_ID,
 
     fontFamily: "",
@@ -131,13 +132,26 @@ export const useMapStore = defineStore("map", {
     },
 
     selectedSize(state) {
-      return getPosterSizeById(state.selectedSizeId) || getPosterSizeById(DEFAULT_POSTER_SIZE_ID)!;
+      const size = getPosterSizeById(state.selectedSizeId) || getPosterSizeById(DEFAULT_POSTER_SIZE_ID)!;
+      if (state.selectedOrientation === "landscape") {
+        return {
+          ...size,
+          widthInches: size.heightInches,
+          heightInches: size.widthInches,
+          widthCm: size.heightCm,
+          heightCm: size.widthCm,
+          targetWidthPx: size.targetHeightPx,
+          targetHeightPx: size.targetWidthPx,
+        };
+      }
+      return size;
     },
 
     aspectRatio(state): number {
       const ratio = getAspectRatioById(state.selectedAspectRatioId);
       if (ratio) {
-        return ratio.w / ratio.h;
+        const base = ratio.w / ratio.h;
+        return state.selectedOrientation === "landscape" ? 1 / base : base;
       }
       // Fallback to product variant
       const sizes = getAvailableSizes(state.selectedProductType, state.selectedFrameColor);
@@ -146,10 +160,12 @@ export const useMapStore = defineStore("map", {
         ? sizes.find((v) => v.sizeLabel === currentSize.label)
         : sizes[0];
       if (variant) {
-        return variant.widthInches / variant.heightInches;
+        const base = variant.widthInches / variant.heightInches;
+        return state.selectedOrientation === "landscape" ? 1 / base : base;
       }
       const size = getPosterSizeById(state.selectedSizeId) || getPosterSizeById(DEFAULT_POSTER_SIZE_ID)!;
-      return size.widthInches / size.heightInches;
+      const base = size.widthInches / size.heightInches;
+      return state.selectedOrientation === "landscape" ? 1 / base : base;
     },
 
     selectedPngResolution(state): number {
@@ -264,6 +280,10 @@ export const useMapStore = defineStore("map", {
     setPngResolution(id: string) {
       if (!PNG_RESOLUTION_PRESETS.find((p) => p.id === id)) return;
       this.selectedPngResolutionId = id;
+    },
+
+    setOrientation(orientation: "portrait" | "landscape") {
+      this.selectedOrientation = orientation;
     },
 
     setFrameColor(id: FrameColorId) {

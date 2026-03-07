@@ -620,9 +620,13 @@
 
     <aside class="settings-print-col">
     <div class="settings-fixed">
+      <OrientationSelector
+        v-model="orientationModel"
+      />
+
       <AspectRatioSelector
         v-model="aspectRatioModel"
-        :ratios="ASPECT_RATIOS"
+        :ratios="effectiveRatios"
       />
 
       <div class="action-row">
@@ -916,6 +920,22 @@ onBeforeUnmount(() => {
 const aspectRatioModel = computed<string>({
   get: () => store.selectedAspectRatioId,
   set: (value: string) => store.setAspectRatio(value),
+});
+
+const effectiveRatios = computed(() => {
+  if (store.selectedOrientation === "landscape") {
+    return ASPECT_RATIOS.map((r) => ({
+      ...r,
+      w: r.h,
+      h: r.w,
+    }));
+  }
+  return ASPECT_RATIOS;
+});
+
+const orientationModel = computed<"portrait" | "landscape">({
+  get: () => store.selectedOrientation,
+  set: (value: "portrait" | "landscape") => store.setOrientation(value),
 });
 
 

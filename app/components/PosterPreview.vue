@@ -8,6 +8,7 @@
       <div
         ref="frameRef"
         class="poster-frame"
+        :class="{ 'is-landscape': store.aspectRatio > 1 }"
         :style="{
           '--poster-aspect': store.aspectRatio,
           '--poster-bg': posterBgColor,
