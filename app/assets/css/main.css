@@ -1645,7 +1645,7 @@ button.ghost {
   width: 100vw;
   display: flex;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
   mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
@@ -1767,7 +1767,7 @@ button.ghost {
 /* ── Gallery carousel ── */
 
 .home-carousel {
-  overflow: hidden;
+  overflow: visible;
   min-width: 0;
   padding: 0;
   width: 100%;
