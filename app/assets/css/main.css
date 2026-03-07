@@ -17,6 +17,10 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 html,
 body,
 #__nuxt {
@@ -1626,28 +1630,17 @@ button.ghost {
   min-width: 0;
 }
 
-/* ── Carousel Section (full-bleed) ── */
-
-.home-fold {
-  position: relative;
-  width: 100vw;
-  margin-left: calc(-1 * (100vw - 100%) / 2);
-  min-height: 100vh;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3vh;
-  overflow: hidden;
-}
+/* ── Carousel Section (full-bleed) — only used outside fold ── */
 
 .home-carousel-section {
   width: 100vw;
-  display: flex;
-  align-items: center;
-  overflow: visible;
-  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  margin-left: calc(-1 * (100vw - 100%) / 2);
+  display: grid;
+  gap: 1rem;
+  padding: 2rem 0 0;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
 }
 
 /* ── Hero ── */
@@ -1655,55 +1648,53 @@ button.ghost {
 .home-hero {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 1.6rem;
-  padding: 2rem;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
 }
 
-.home-hero-blur {
+.home-hero-glass {
   position: absolute;
-  inset: 0;
-  z-index: 4;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  mask-image: radial-gradient(ellipse at center, black 0%, black 45%, transparent 80%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, black 45%, transparent 80%);
+  width: min(600px, 80vw);
+  height: min(340px, 55vh);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(30, 27, 23, 0.75) 0%,
+    rgba(30, 27, 23, 0.45) 40%,
+    transparent 70%
+  );
+  filter: blur(40px);
   pointer-events: none;
 }
 
-.home-hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  background: radial-gradient(ellipse at center, rgba(20, 18, 15, 0.95) 0%, rgba(20, 18, 15, 0.75) 40%, rgba(20, 18, 15, 0.2) 75%, transparent 100%);
-  pointer-events: none;
-}
-
-.home-hero-copy {
+.home-hero-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
   text-align: center;
-  display: grid;
-  justify-items: center;
-  gap: 1.2rem;
+  pointer-events: auto;
+  padding: 0 1rem;
 }
 
-.home-hero-copy h1 {
+.home-hero-content h1 {
   margin: 0;
   font-family: "Cormorant Garamond", "Times New Roman", serif;
   font-weight: 400;
-  font-size: clamp(4.5rem, 8vw + 2rem, 8.5rem);
+  font-size: clamp(3rem, 2.2rem + 4.5vw, 6rem);
   line-height: 1.05;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: #fff;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.5);
   opacity: 0;
-  animation: homeFadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+  animation: homeFadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;
 }
 
-.home-hero-copy h1 em {
+.home-hero-content h1 em {
   font-style: italic;
   font-weight: 600;
   color: var(--accent);
@@ -1712,14 +1703,14 @@ button.ghost {
 .home-hero-subtext {
   margin: 0;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: clamp(0.78rem, 0.65rem + 0.5vw, 1rem);
+  font-weight: 400;
   letter-spacing: 0.1em;
-  color: #fff;
+  color: rgba(232, 223, 208, 0.7);
+  text-transform: lowercase;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
   opacity: 0;
-  text-transform: uppercase;
-  animation: homeFadeUpSub 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
-  text-shadow: 0 2px 15px rgba(0, 0, 0, 0.8);
+  animation: homeFadeUpSub 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
 }
 
 /* ── Trust line ── */
@@ -1738,81 +1729,80 @@ button.ghost {
 /* ── CTA ── */
 
 .home-cta {
-  pointer-events: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: var(--ink);
   color: var(--bg);
   border: 1px solid var(--ink);
-  padding: 1.2rem 3.5rem;
+  padding: 1.1rem 3.2rem;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  animation: homeFadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
 }
 
 .home-cta:hover {
   background: var(--accent);
-  color: var(--bg);
+  color: var(--accent-ink);
   border-color: var(--accent);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 30px rgba(212, 168, 92, 0.3);
 }
 
 /* ── Gallery carousel ── */
 
 .home-carousel {
-  overflow: visible;
+  overflow: hidden;
   min-width: 0;
   padding: 0;
   width: 100%;
+  height: 100%;
 }
 
 .home-carousel-track {
   display: flex;
-  gap: 1.2rem;
+  gap: 1rem;
   width: max-content;
-  animation: home-poster-scroll 90s linear infinite;
+  height: 100%;
+  animation: home-poster-scroll 60s linear infinite;
 }
 
 .home-carousel-track--reverse {
-  animation: home-poster-scroll-reverse 95s linear infinite;
+  animation: home-poster-scroll-reverse 65s linear infinite;
 }
 
-
 .home-carousel-card {
-  height: clamp(240px, 42vh, 480px);
+  height: 92%;
+  align-self: center;
   aspect-ratio: 3 / 4;
-  border: 1px solid color-mix(in oklab, var(--line) 60%, transparent);
   border-radius: 6px;
-  background: var(--surface);
   overflow: hidden;
   position: relative;
   flex: 0 0 auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--surface);
   transform: scale(1);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
   color: inherit;
 }
 
 .home-carousel-card:hover {
-  transform: scale(1.05) translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 10;
+  transform: scale(1.06) translateY(-3px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  z-index: 5;
 }
 
 .home-carousel-card img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
-  background: #262320;
+  background: var(--surface);
 }
 
 .home-carousel-meta {
@@ -1839,147 +1829,112 @@ button.ghost {
   opacity: 1;
 }
 
-
 @keyframes home-poster-scroll {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-33.333%);
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.333%); }
 }
 
 @keyframes home-poster-scroll-reverse {
-  from {
-    transform: translateX(-33.333%);
-  }
-
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(-33.333%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes homeFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes homeFadeUpSub {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-
-  to {
-    opacity: 0.4;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 0.7; transform: translateY(0); }
 }
 
 @keyframes homeFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes homeFadeInCarousel {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* ── Above-the-fold viewport fit ── */
 
 .home-fold {
+  position: relative;
   height: calc(100dvh - 56px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  overflow: hidden;
+  width: 100vw;
+  margin-left: calc(-1 * (100vw - 100%) / 2);
 }
 
-.home-fold>.home-carousel-section {
-  flex: 1 1 0;
+.home-fold-row {
+  flex: 1 1 50%;
   min-height: 0;
-  max-height: 340px;
-  padding: 0;
+  position: relative;
+  overflow: hidden;
+  padding: 0.75rem 0;
 }
 
-.home-fold>.home-carousel-section--top {
-  padding-top: 1rem;
+/* Dark overlay on gallery rows so text stands out */
+.home-fold-row-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(30, 27, 23, 0.35);
+  pointer-events: none;
+}
+
+.home-fold-row--top {
   opacity: 0;
-  animation: homeFadeInCarousel 1.2s ease-out 0.35s forwards;
-  transform: scale(0.9);
-  transform-origin: bottom center;
+  animation: homeFadeInCarousel 1.2s ease-out 0.15s forwards;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, black 10%, black 90%, transparent),
+    linear-gradient(to bottom, black 60%, transparent 100%);
+  -webkit-mask-composite: destination-in;
+  mask-image:
+    linear-gradient(to right, transparent, black 10%, black 90%, transparent),
+    linear-gradient(to bottom, black 60%, transparent 100%);
+  mask-composite: intersect;
 }
 
-.home-fold>.home-carousel-section:last-of-type {
-  padding-bottom: 1rem;
+.home-fold-row--bottom {
   opacity: 0;
-  animation: homeFadeInCarousel 1.2s ease-out 0.45s forwards;
-  transform: scale(0.9);
-  transform-origin: top center;
+  animation: homeFadeInCarousel 1.2s ease-out 0.25s forwards;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, black 10%, black 90%, transparent),
+    linear-gradient(to top, black 60%, transparent 100%);
+  -webkit-mask-composite: destination-in;
+  mask-image:
+    linear-gradient(to right, transparent, black 10%, black 90%, transparent),
+    linear-gradient(to top, black 60%, transparent 100%);
+  mask-composite: intersect;
 }
 
-.home-fold>.home-hero {
-  flex: 0 0 auto;
-  padding: 1rem 0 0.75rem;
-}
-
-.home-fold .home-hero-copy h1 {
-  font-size: clamp(1.8rem, 1.2rem + 2.5vw, 3.2rem);
-}
-
-.home-fold .home-hero-copy {
-  gap: 0.6rem;
-}
-
-.home-fold .home-cta {
-  opacity: 0;
-  animation: homeFadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;
-}
-
-.home-fold .home-carousel {
+.home-fold-row .home-carousel {
   height: 100%;
   display: flex;
+  align-items: center;
+}
+
+.home-fold-row .home-carousel-track {
   align-items: stretch;
 }
 
-.home-fold .home-carousel-card {
-  width: auto;
-  aspect-ratio: 3 / 4;
-}
-
-.home-fold .home-carousel-card img {
-  width: auto;
+.home-fold-row .home-carousel-card {
   height: 100%;
 }
 
-@media (max-height: 700px) {
-  .home-carousel-section--top {
-    display: none;
-  }
-}
+
+
 
 /* ── Divider ── */
 
 .home-divider-wrapper {
-  padding: 8rem 1rem 4rem;
+  padding: 5rem 1rem 1rem;
   display: flex;
   justify-content: center;
 }
@@ -2081,6 +2036,7 @@ button.ghost {
 .mockup-card--0 {
   grid-column: span 2;
 }
+
 .mockup-card--0 .mockup-img-wrapper {
   aspect-ratio: 16 / 10;
 }
@@ -2092,6 +2048,7 @@ button.ghost {
 .mockup-card--1 {
   grid-column: span 1;
 }
+
 .mockup-card--1 .mockup-img-wrapper {
   aspect-ratio: 4 / 5;
 }
@@ -2101,6 +2058,7 @@ button.ghost {
 .mockup-card--4 {
   grid-column: span 1;
 }
+
 .mockup-card--2 .mockup-img-wrapper,
 .mockup-card--3 .mockup-img-wrapper,
 .mockup-card--4 .mockup-img-wrapper {
@@ -2132,38 +2090,6 @@ button.ghost {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-
-/* ── Scroll Animations ── */
-
-.animate-on-scroll {
-  opacity: 0;
-  will-change: opacity, transform;
-}
-
-.animate-on-scroll--up {
-  transform: translateY(30px);
-}
-
-.animate-on-scroll--visible {
-  animation: scrollFadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes scrollFadeUp {
-  0% {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-on-scroll--stagger-0.animate-on-scroll--visible { animation-delay: 0.1s; }
-.animate-on-scroll--stagger-1.animate-on-scroll--visible { animation-delay: 0.2s; }
-.animate-on-scroll--stagger-2.animate-on-scroll--visible { animation-delay: 0.3s; }
-.animate-on-scroll--stagger-3.animate-on-scroll--visible { animation-delay: 0.4s; }
-.animate-on-scroll--stagger-4.animate-on-scroll--visible { animation-delay: 0.5s; }
 
 /* ── FAQ Section ── */
 
@@ -2289,24 +2215,17 @@ button.ghost {
 }
 
 @media (max-width: 760px) {
-  .home-hero {
-    padding: 2.5rem 0 2rem;
+  .home-hero-content h1 {
+    font-size: clamp(2rem, 1.5rem + 3vw, 3.2rem);
   }
 
-  .home-hero-copy h1 {
-    font-size: clamp(1.8rem, 1.2rem + 3vw, 3rem);
-  }
-
-  .home-carousel-section {
-    gap: 0.7rem;
+  .home-hero-glass {
+    width: 90vw;
+    height: 45vh;
   }
 
   .home-carousel-card {
-    width: min(42vw, 170px);
-  }
-
-  .home-carousel-meta p {
-    opacity: 1;
+    aspect-ratio: 3 / 4;
   }
 }
 
@@ -2320,12 +2239,19 @@ button.ghost {
   .home-mockups {
     padding: 4rem 1rem 2rem;
   }
+
   .home-mockups-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .mockup-card--0, .mockup-card--1, .mockup-card--2, .mockup-card--3, .mockup-card--4 {
+
+  .mockup-card--0,
+  .mockup-card--1,
+  .mockup-card--2,
+  .mockup-card--3,
+  .mockup-card--4 {
     grid-column: span 1;
   }
+
   .mockup-card--0 .mockup-img-wrapper,
   .mockup-card--1 .mockup-img-wrapper,
   .mockup-card--2 .mockup-img-wrapper,
@@ -2333,9 +2259,11 @@ button.ghost {
   .mockup-card--4 .mockup-img-wrapper {
     aspect-ratio: 4 / 5;
   }
+
   .mockup-card--0 {
     grid-column: span 2;
   }
+
   .mockup-card--0 .mockup-img-wrapper {
     aspect-ratio: 16 / 10;
   }
@@ -2345,20 +2273,12 @@ button.ghost {
   .home-mockups-grid {
     grid-template-columns: 1fr;
   }
+
   .mockup-card--0 {
     grid-column: span 1;
   }
+
   .mockup-card--0 .mockup-img-wrapper {
     aspect-ratio: 1 / 1;
-  }
-}
-
-@media (min-height: 900px) and (min-width: 1024px) {
-  .home-hero-copy h1 {
-    font-size: clamp(6.5rem, 10vw + 2rem, 10.5rem);
-  }
-  
-  .home-carousel-card {
-    height: clamp(380px, 45vh, 600px);
   }
 }

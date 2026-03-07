@@ -9,8 +9,9 @@
 
     <main class="home-main">
       <div class="home-fold">
-        <!-- Carousel row 1 -->
-        <div class="home-carousel-section">
+        <!-- Gallery row 1 (top 50%) -->
+        <div class="home-fold-row home-fold-row--top">
+          <div class="home-fold-row-overlay"></div>
           <div class="home-carousel" aria-label="Poster gallery row 1">
             <div class="home-carousel-track">
               <NuxtLink
@@ -20,16 +21,14 @@
                 :to="item.ctaLink"
               >
                 <img :src="item.src" :alt="item.alt" loading="eager" />
-                <div class="home-carousel-meta">
-                  <p>{{ item.city }}</p>
-                </div>
               </NuxtLink>
             </div>
           </div>
         </div>
 
-        <!-- Carousel row 2 -->
-        <div class="home-carousel-section">
+        <!-- Gallery row 2 (bottom 50%) -->
+        <div class="home-fold-row home-fold-row--bottom">
+          <div class="home-fold-row-overlay"></div>
           <div class="home-carousel home-carousel--reverse" aria-label="Poster gallery row 2">
             <div class="home-carousel-track home-carousel-track--reverse">
               <NuxtLink
@@ -39,22 +38,19 @@
                 :to="item.ctaLink"
               >
                 <img :src="item.src" :alt="item.alt" loading="eager" />
-                <div class="home-carousel-meta">
-                  <p>{{ item.city }}</p>
-                </div>
               </NuxtLink>
             </div>
           </div>
         </div>
 
-        <!-- Headline + CTA floating over carousels -->
-        <div class="home-hero-overlay"></div>
+        <!-- Floating hero text + CTA -->
         <section class="home-hero">
-          <div class="home-hero-copy">
+          <div class="home-hero-glass"></div>
+          <div class="home-hero-content">
             <h1>Turn Coordinates<br /><em>into Art</em></h1>
             <p class="home-hero-subtext">Design unlimited maps for free</p>
+            <NuxtLink class="home-cta" to="/create">Create Your Map</NuxtLink>
           </div>
-          <NuxtLink class="home-cta" to="/create">Create Your Map</NuxtLink>
         </section>
       </div>
 
@@ -64,7 +60,7 @@
 
       <!-- Lifestyle Mockups -->
       <section class="home-mockups">
-        <div class="home-mockups-header animate-on-scroll animate-on-scroll--up">
+        <div class="home-mockups-header">
           <h2>Museum-Quality<br /><em>Map Prints</em></h2>
           <p>Custom city maps designed to elevate any space</p>
         </div>
@@ -72,7 +68,7 @@
           <NuxtLink 
             v-for="(img, idx) in mockupImages" 
             :key="idx" 
-            :class="`mockup-card mockup-card--${idx} animate-on-scroll animate-on-scroll--stagger-${idx}`"
+            :class="`mockup-card mockup-card--${idx}`"
             :to="img.ctaLink"
           >
             <div class="mockup-img-wrapper">
@@ -99,10 +95,6 @@
 </template>
 
 <script setup lang="ts">
-import { useIntersectionObserver } from '~/composables/useIntersectionObserver';
-
-useIntersectionObserver();
-
 const galleryItems = [
   {
     src: "/gallery/tokyo_japanese_ink.webp",
