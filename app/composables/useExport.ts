@@ -11,7 +11,7 @@ import { generateMapStyle } from "~/lib/map/maplibreStyle";
 export function useExport(mapRef: Ref<MapLibreMap | null>) {
   const store = useMapStore();
 
-  const exportMapPng = async (opts?: { showWatermark?: boolean; themeId?: string }): Promise<{ blob: Blob; filename: string }> => {
+  const exportMapPng = async (opts?: { showWatermark?: boolean; themeId?: string; useSelectedResolution?: boolean }): Promise<{ blob: Blob; filename: string }> => {
     const map = mapRef.value;
     if (!map) {
       throw new Error("Map is not ready yet.");
@@ -43,11 +43,25 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         });
       }
 
-      const size = store.selectedSize;
+      // Determine target pixel dimensions
+      let targetW: number;
+      let targetH: number;
+
+      if (opts?.useSelectedResolution) {
+        // Free download: use user-selected PNG resolution
+        targetW = store.selectedPngResolution;
+        targetH = Math.round(targetW / store.aspectRatio);
+      } else {
+        // Checkout/print: use full print-quality resolution
+        const size = store.selectedSize;
+        targetW = size.targetWidthPx;
+        targetH = size.targetHeightPx;
+      }
+
       const mapCanvas = await captureMapAsCanvas(
         map,
-        size.targetWidthPx,
-        size.targetHeightPx,
+        targetW,
+        targetH,
         styleOverride,
       );
 
@@ -84,15 +98,6 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         coordsFontFamily: store.coordsFontFamily || undefined,
         dividerLength: store.dividerLength,
       });
-
-      if (
-        finalCanvas.width < size.targetWidthPx ||
-        finalCanvas.height < size.targetHeightPx
-      ) {
-        throw new Error(
-          `Export failed resolution validation. Expected ${size.targetWidthPx}x${size.targetHeightPx}px, got ${finalCanvas.width}x${finalCanvas.height}px.`,
-        );
-      }
 
       const blob = await new Promise<Blob>((resolve, reject) => {
         finalCanvas.toBlob((value) => {
@@ -208,7 +213,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
 
   const downloadPng = async () => {
     try {
-      const { blob, filename } = await exportMapPng({ showWatermark: true });
+      const { blob, filename } = await exportMapPng({ showWatermark: true, useSelectedResolution: true });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -238,7 +243,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     store.setIsExporting(true);
     try {
       for (const theme of themeOptions) {
-        const { blob, filename } = await exportMapPng({ showWatermark: true, themeId: theme.id });
+        const { blob, filename } = await exportMapPng({ showWatermark: true, themeId: theme.id, useSelectedResolution: true });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;

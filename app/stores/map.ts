@@ -1,6 +1,13 @@
 import { defineStore } from "pinia";
 import { DEFAULT_POSTER_SIZE_ID, getPosterSizeById } from "~~/shared/posterSizes";
 import {
+  DEFAULT_ASPECT_RATIO_ID,
+  ASPECT_RATIO_IDS,
+  getAspectRatioById,
+  DEFAULT_PNG_RESOLUTION_ID,
+  PNG_RESOLUTION_PRESETS,
+} from "~~/shared/aspectRatios";
+import {
   PRODUCT_TYPES,
   PRODUCT_TYPE_IDS,
   getProductTypeById,
@@ -42,6 +49,8 @@ export const useMapStore = defineStore("map", {
     selectedProductType: "poster" as ProductTypeId,
     selectedFrameColor: "black" as FrameColorId,
     selectedSizeId: DEFAULT_POSTER_SIZE_ID,
+    selectedAspectRatioId: DEFAULT_ASPECT_RATIO_ID,
+    selectedPngResolutionId: DEFAULT_PNG_RESOLUTION_ID,
 
     fontFamily: "",
     showTitle: true,
@@ -125,6 +134,11 @@ export const useMapStore = defineStore("map", {
     },
 
     aspectRatio(state): number {
+      const ratio = getAspectRatioById(state.selectedAspectRatioId);
+      if (ratio) {
+        return ratio.w / ratio.h;
+      }
+      // Fallback to product variant
       const sizes = getAvailableSizes(state.selectedProductType, state.selectedFrameColor);
       const currentSize = getPosterSizeById(state.selectedSizeId);
       const variant = currentSize
@@ -135,6 +149,11 @@ export const useMapStore = defineStore("map", {
       }
       const size = getPosterSizeById(state.selectedSizeId) || getPosterSizeById(DEFAULT_POSTER_SIZE_ID)!;
       return size.widthInches / size.heightInches;
+    },
+
+    selectedPngResolution(state): number {
+      const preset = PNG_RESOLUTION_PRESETS.find((p) => p.id === state.selectedPngResolutionId);
+      return preset?.widthPx ?? 2048;
     },
 
     selectedThemeBase(state) {
@@ -224,6 +243,16 @@ export const useMapStore = defineStore("map", {
           this.selectedSizeId = posterSizeId as any;
         }
       }
+    },
+
+    setAspectRatio(id: string) {
+      if (!ASPECT_RATIO_IDS.includes(id)) return;
+      this.selectedAspectRatioId = id;
+    },
+
+    setPngResolution(id: string) {
+      if (!PNG_RESOLUTION_PRESETS.find((p) => p.id === id)) return;
+      this.selectedPngResolutionId = id;
     },
 
     setFrameColor(id: FrameColorId) {

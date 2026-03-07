@@ -620,60 +620,55 @@
 
     <aside class="settings-print-col">
     <div class="settings-fixed">
-      <ProductTypeSelector
-        v-model="productTypeModel"
-        :products="PRODUCT_TYPES"
-      />
-
-      <FrameColorSelector
-        v-if="store.needsFrameSelection"
-        v-model="frameColorModel"
-        :options="store.selectedProduct.frameOptions"
-      />
-
-      <SizeSelector
-        v-model="sizeModel"
-        :sizes="store.availableSizes"
+      <AspectRatioSelector
+        v-model="aspectRatioModel"
+        :ratios="ASPECT_RATIOS"
       />
 
       <div class="action-row">
-        <button
-          type="button"
-          class="generate-btn"
-          :disabled="store.isExporting || store.isCheckoutLoading"
-          @click="$emit('buy')"
-        >
-          {{ buyButtonLabel }}
-        </button>
-        <p class="subtle-note">
-          The "Made with printapoint.com" mark will be REMOVED from the final print.
-        </p>
-        <p class="subtle-note">
-          Checkout and fulfillment are securely powered by Stripe and Printful.
-        </p>
+        <NuxtLink to="/print" class="generate-btn preview-print-link">
+          Preview Print Options →
+        </NuxtLink>
       </div>
 
-      <div class="export-row">
-        <button
-          type="button"
-          class="export-btn"
-          :disabled="store.isExporting"
-          @click="$emit('download-png')"
-          title="Download PNG (Current Theme)"
-        >
-          <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          <span>PNG</span>
-        </button>
+      <div class="export-row export-row-top">
+        <!-- PNG with resolution dropdown -->
+        <div class="dropdown-btn-wrap">
+          <button
+            type="button"
+            class="export-btn has-dropdown"
+            :disabled="store.isExporting"
+            @click.stop="pngDropdownOpen = !pngDropdownOpen; allPngDropdownOpen = false"
+            title="Download PNG"
+          >
+            <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>PNG</span>
+            <svg class="dropdown-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 4 6 8 10 4" /></svg>
+          </button>
+          <div v-if="pngDropdownOpen" class="dropdown-menu">
+            <button
+              v-for="preset in PNG_RESOLUTION_PRESETS"
+              :key="preset.id"
+              type="button"
+              class="dropdown-menu-item"
+              @click="selectPngResAndDownload(preset.id)"
+            >
+              {{ preset.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- SVG -->
         <button
           type="button"
           class="export-btn"
           :disabled="store.isExporting"
           @click="$emit('download-svg')"
-          title="Download SVG (Current Theme)"
+          title="Download SVG"
         >
           <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -682,20 +677,42 @@
           </svg>
           <span>SVG</span>
         </button>
-        <button
-          type="button"
-          class="export-btn"
-          :disabled="store.isExporting"
-          @click="$emit('download-all-png')"
-          title="Download PNGs for All Themes"
-        >
-          <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          <span>All PNGs</span>
-        </button>
+      </div>
+
+      <div class="export-row export-row-full">
+        <!-- All Themes PNG with resolution dropdown - full width -->
+        <div class="dropdown-btn-wrap">
+          <button
+            type="button"
+            class="export-btn has-dropdown"
+            :disabled="store.isExporting"
+            @click.stop="allPngDropdownOpen = !allPngDropdownOpen; pngDropdownOpen = false"
+            title="Download PNGs for All Themes"
+          >
+            <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>All Themes (PNG)</span>
+            <svg class="dropdown-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2 4 6 8 10 4" /></svg>
+          </button>
+          <div v-if="allPngDropdownOpen" class="dropdown-menu">
+            <button
+              v-for="preset in PNG_RESOLUTION_PRESETS"
+              :key="preset.id"
+              type="button"
+              class="dropdown-menu-item"
+              @click="selectAllPngResAndDownload(preset.id)"
+            >
+              {{ preset.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="export-row export-row-top">
+        <!-- All Themes SVG -->
         <button
           type="button"
           class="export-btn"
@@ -708,8 +725,10 @@
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          <span>All SVGs</span>
+          <span>All Themes (SVG)</span>
         </button>
+
+        <!-- Share -->
         <button
           type="button"
           class="export-btn"
@@ -724,19 +743,6 @@
           </svg>
           <span>Share</span>
         </button>
-        <button
-          type="button"
-          class="export-btn"
-          :disabled="store.isExporting"
-          @click="$emit('show-preview')"
-        >
-          <svg class="export-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <line x1="3" y1="9" x2="21" y2="9" />
-            <line x1="9" y1="21" x2="9" y2="9" />
-          </svg>
-          <span>Preview</span>
-        </button>
       </div>
 
       <p v-if="shareCopied" class="success-note">Link copied to clipboard!</p>
@@ -748,12 +754,10 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
-import SizeSelector from "~/components/SizeSelector.vue";
-import ProductTypeSelector from "~/components/ProductTypeSelector.vue";
-import FrameColorSelector from "~/components/FrameColorSelector.vue";
+import AspectRatioSelector from "~/components/AspectRatioSelector.vue";
 import { useLocationAutocomplete } from "~/composables/useLocationAutocomplete";
 import { useMapStore } from "~/stores/map";
-import { formatUsd, PRODUCT_TYPES, type ProductTypeId, type FrameColorId } from "~~/shared/productCatalog";
+import { ASPECT_RATIOS, PNG_RESOLUTION_PRESETS } from "~~/shared/aspectRatios";
 import {
   DISPLAY_PALETTE_KEYS,
   PALETTE_COLOR_LABELS,
@@ -771,14 +775,12 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  buy: [];
   "location-selected": [lat: number, lon: number];
   "download-png": [];
   "download-svg": [];
   "download-all-png": [];
   "download-all-svg": [];
   share: [];
-  "show-preview": [];
 }>();
 
 const store = useMapStore();
@@ -824,6 +826,41 @@ const themeItemRefs = ref<Record<number, HTMLElement>>({});
 const canScrollThemePrev = ref(false);
 const canScrollThemeNext = ref(false);
 
+// PNG resolution dropdown state
+const pngDropdownOpen = ref(false);
+const allPngDropdownOpen = ref(false);
+
+function closeAllDropdowns() {
+  pngDropdownOpen.value = false;
+  allPngDropdownOpen.value = false;
+}
+
+function handlePngDownload() {
+  closeAllDropdowns();
+  emit("download-png");
+}
+
+function handleAllPngDownload() {
+  closeAllDropdowns();
+  emit("download-all-png");
+}
+
+function selectPngResAndDownload(resId: string) {
+  store.setPngResolution(resId);
+  pngDropdownOpen.value = false;
+  emit("download-png");
+}
+
+function selectAllPngResAndDownload(resId: string) {
+  store.setPngResolution(resId);
+  allPngDropdownOpen.value = false;
+  emit("download-all-png");
+}
+
+function onDocClick() {
+  closeAllDropdowns();
+}
+
 function updateThemeScrollState() {
   const track = themeTrackRef.value;
   if (!track) {
@@ -868,46 +905,20 @@ onMounted(() => {
     updateThemeScrollState();
   });
   window.addEventListener("resize", updateThemeScrollState);
+  document.addEventListener("click", onDocClick);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateThemeScrollState);
+  document.removeEventListener("click", onDocClick);
 });
 
-const productTypeModel = computed<ProductTypeId>({
-  get: () => store.selectedProductType,
-  set: (value: ProductTypeId) => store.setProductType(value),
+const aspectRatioModel = computed<string>({
+  get: () => store.selectedAspectRatioId,
+  set: (value: string) => store.setAspectRatio(value),
 });
 
-const frameColorModel = computed<FrameColorId>({
-  get: () => store.selectedFrameColor,
-  set: (value: FrameColorId) => store.setFrameColor(value),
-});
 
-const sizeModel = computed<string>({
-  get: () => store.selectedVariant?.sizeLabel ?? store.availableSizes[0]?.sizeLabel ?? "",
-  set: (value: string) => {
-    // Find matching poster size id for backward compat
-    const variant = store.availableSizes.find((v: any) => v.sizeLabel === value);
-    if (variant) {
-      const sizeId = `${variant.widthInches}x${variant.heightInches}`;
-      store.setSize(sizeId);
-    }
-  },
-});
-
-const buyButtonLabel = computed(() => {
-  if (store.isCheckoutLoading) {
-    return "Preparing checkout...";
-  }
-  if (store.isExporting) {
-    return "Preparing your print...";
-  }
-
-  const variant = store.selectedVariant;
-  const price = variant?.defaultPriceCents ?? store.selectedSize.defaultPriceCents;
-  return `Buy Print - ${formatUsd(price)}`;
-});
 
 const autoCoordinates = computed(() =>
   formatCoordinates(store.latitude, store.longitude),

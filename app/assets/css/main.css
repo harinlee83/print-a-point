@@ -136,8 +136,8 @@ button {
 
 .customizer-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 300px) 1fr minmax(280px, 340px);
-  gap: 0.5rem;
+  grid-template-columns: minmax(260px, 300px) 1fr minmax(280px, 320px);
+  gap: 0;
   flex: 1;
   min-height: 0;
   align-items: stretch;
@@ -160,16 +160,18 @@ button {
   align-items: center;
   justify-content: center;
   overflow: visible;
-  padding: 1.25rem;
+  padding: 0.5rem;
 }
 
 .settings-print-col {
   min-width: 0;
   min-height: 0;
-  overflow-x: hidden;
+  overflow-x: visible;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  padding: 0 0.75rem 0 0.5rem;
+  box-sizing: border-box;
 }
 
 .settings-scroll {
@@ -824,6 +826,89 @@ button:focus-visible {
   box-shadow: none;
 }
 
+/* ── Aspect Ratio Selector ── */
+
+.ratio-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.ratio-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.45rem 0.3rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ratio-card:hover {
+  border-color: var(--accent);
+}
+
+.ratio-card.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.ratio-shape-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+}
+
+.ratio-shape {
+  background: var(--muted);
+  opacity: 0.25;
+  border-radius: 2px;
+}
+
+.ratio-card.is-active .ratio-shape {
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+.ratio-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.ratio-card.is-active .ratio-label {
+  color: var(--ink);
+}
+
+/* ── PNG Resolution Selector ── */
+
+.resolution-select {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 0.82rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 1.5rem;
+}
+
+.resolution-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .size-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -900,30 +985,42 @@ button.ghost {
   font-size: 0.76rem;
 }
 
-.export-row {
-  display: flex;
+.export-row-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.export-row-full {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .export-btn {
-  flex: 1;
-  min-width: 6rem;
-  display: inline-flex;
+  width: 100%;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.85rem;
+  padding: 0.65rem 0.5rem;
+  font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
   background: var(--surface);
   color: var(--ink);
-  white-space: nowrap;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.btn-text-shrink {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .export-btn:hover:not(:disabled) {
@@ -941,6 +1038,57 @@ button.ghost {
   width: 1.1rem;
   height: 1.1rem;
   flex-shrink: 0;
+}
+
+/* ── Dropdown Button (PNG resolution) ── */
+
+.dropdown-btn-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 6rem;
+}
+
+.export-btn.has-dropdown {
+  width: 100%;
+}
+
+.dropdown-chevron {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0.5;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.dropdown-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.dropdown-menu-item:hover {
+  background: rgba(255,255,255,0.06);
 }
 
 /* ── Preview Modal ── */
@@ -2530,6 +2678,87 @@ button.ghost {
   .footer-links {
     flex-wrap: wrap;
     justify-content: center;
+  }
+}
+
+/* ── Print Page ── */
+
+.print-page {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 3rem;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  min-height: calc(100dvh - 56px);
+  align-items: start;
+}
+
+.print-preview-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  position: sticky;
+  top: 80px;
+}
+
+.print-preview-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.print-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.print-preview-placeholder {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.print-preview-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: center;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.print-options-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.preview-print-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+@media (max-width: 720px) {
+  .print-page {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .print-preview-col {
+    position: static;
   }
 }
 

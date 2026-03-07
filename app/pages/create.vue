@@ -10,21 +10,14 @@
     </header>
 
     <main class="app-main">
-      <PreviewModal
-        :open="previewModalOpen"
-        :image-url="previewImageUrl"
-        @close="closePreviewModal"
-      />
       <CustomizerPanel
         :share-copied="shareCopied"
-        @buy="startCheckout"
         @location-selected="handleLocationSelected"
         @download-png="handleDownloadPng"
         @download-svg="handleDownloadSvg"
         @download-all-png="handleDownloadAllPng"
         @download-all-svg="handleDownloadAllSvg"
         @share="handleShare"
-        @show-preview="openPreviewModal"
       >
         <PosterPreview
           ref="previewRef"
@@ -40,7 +33,6 @@ import { onMounted, ref, watch } from "vue";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import CustomizerPanel from "~/components/CustomizerPanel.vue";
 import PosterPreview from "~/components/PosterPreview.vue";
-import PreviewModal from "~/components/PreviewModal.vue";
 import { useMapStore } from "~/stores/map";
 import { useExport } from "~/composables/useExport";
 import { useShareConfig } from "~/composables/useShareConfig";
@@ -80,27 +72,6 @@ const handleDownloadAllSvg = () => {
 };
 
 const shareCopied = ref(false);
-const previewModalOpen = ref(false);
-const previewImageUrl = ref<string | null>(null);
-
-const openPreviewModal = async () => {
-  try {
-    const { blob } = await exportMapPng();
-    const url = URL.createObjectURL(blob);
-    previewImageUrl.value = url;
-    previewModalOpen.value = true;
-  } catch (err) {
-    store.setError(err instanceof Error ? err.message : "Could not generate preview.");
-  }
-};
-
-const closePreviewModal = () => {
-  previewModalOpen.value = false;
-  if (previewImageUrl.value) {
-    URL.revokeObjectURL(previewImageUrl.value);
-    previewImageUrl.value = null;
-  }
-};
 
 const handleShare = async () => {
   const ok = await copyShareUrl();
@@ -115,58 +86,7 @@ const handleShare = async () => {
   }
 };
 
-const startCheckout = async () => {
-  if (store.isCheckoutLoading || store.isExporting) {
-    return;
-  }
 
-  store.clearError();
-  store.setIsCheckoutLoading(true);
-
-  try {
-    const { blob, filename } = await exportMapPng();
-
-    const formData = new FormData();
-    formData.append("file", blob, filename);
-
-    const uploadResponse = await $fetch<{ url: string }>("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const checkoutBody: Record<string, any> = {
-      imageUrl: uploadResponse.url,
-      productTypeId: store.selectedProductType,
-      sizeLabel: store.selectedVariant?.sizeLabel ?? "",
-      locationLabel: store.location,
-      displayCity: store.displayCity,
-      displayCountry: store.displayCountry,
-      themeId: store.selectedThemeId,
-    };
-    if (store.needsFrameSelection) {
-      checkoutBody.frameColor = store.selectedFrameColor;
-    }
-
-    const checkoutResponse = await $fetch<{ url: string }>("/api/checkout", {
-      method: "POST",
-      body: checkoutBody,
-    });
-
-    if (!checkoutResponse.url) {
-      throw new Error("Checkout URL was not returned.");
-    }
-
-    window.location.href = checkoutResponse.url;
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to start checkout. Please try again.";
-    store.setError(message);
-  } finally {
-    store.setIsCheckoutLoading(false);
-  }
-};
 
 async function applyQueryPreset() {
   applyFromUrl();
