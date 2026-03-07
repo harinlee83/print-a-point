@@ -9,7 +9,7 @@
         ref="frameRef"
         class="poster-frame"
         :style="{
-          '--poster-aspect': `${store.aspectRatio}`,
+          '--poster-aspect': store.aspectRatio,
           '--poster-bg': posterBgColor,
         }"
       >

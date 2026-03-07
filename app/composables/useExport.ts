@@ -121,7 +121,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     }
   };
 
-  const exportMapSvg = async (opts?: { showWatermark?: boolean; themeId?: string }): Promise<{ blob: Blob; filename: string }> => {
+  const exportMapSvg = async (opts?: { showWatermark?: boolean; themeId?: string; useSelectedResolution?: boolean }): Promise<{ blob: Blob; filename: string }> => {
     const map = mapRef.value;
     if (!map) {
       throw new Error("Map is not ready yet.");
@@ -153,11 +153,22 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
         });
       }
 
-      const size = store.selectedSize;
+      let targetW: number;
+      let targetH: number;
+
+      if (opts?.useSelectedResolution) {
+        targetW = store.selectedPngResolution;
+        targetH = Math.round(targetW / store.aspectRatio);
+      } else {
+        const size = store.selectedSize;
+        targetW = size.targetWidthPx;
+        targetH = Math.round(targetW / store.aspectRatio);
+      }
+
       const mapCanvas = await captureMapAsCanvas(
         map,
-        size.targetWidthPx,
-        size.targetHeightPx,
+        targetW,
+        targetH,
         styleOverride,
       );
 
@@ -227,7 +238,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
 
   const downloadSvg = async () => {
     try {
-      const { blob, filename } = await exportMapSvg({ showWatermark: true });
+      const { blob, filename } = await exportMapSvg({ showWatermark: true, useSelectedResolution: true });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -263,7 +274,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     store.setIsExporting(true);
     try {
       for (const theme of themeOptions) {
-        const { blob, filename } = await exportMapSvg({ showWatermark: true, themeId: theme.id });
+        const { blob, filename } = await exportMapSvg({ showWatermark: true, themeId: theme.id, useSelectedResolution: true });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;

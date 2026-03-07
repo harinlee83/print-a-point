@@ -22,6 +22,7 @@ import {
   themeNames,
 } from "~/lib/theme/themeRepository";
 import { generateMapStyle } from "~/lib/map/maplibreStyle";
+import type { ResolvedTheme } from "~/lib/theme/types";
 import type { SearchResult } from "~/lib/location/nominatim";
 import { getPinStyleById, PIN_SIZE_MIN, PIN_SIZE_MAX } from "~/lib/pin/pinStyles";
 import { getMapShapeById, DEFAULT_MAP_SHAPE_ID } from "~/lib/shapes/mapShapes";
@@ -163,11 +164,11 @@ export const useMapStore = defineStore("map", {
       return getTheme(safeTheme);
     },
 
-    effectiveTheme() {
+    effectiveTheme(): ResolvedTheme {
       return applyThemeColorOverrides(this.selectedThemeBase, this.customColors);
     },
 
-    mapStyle() {
+    mapStyle(): any {
       return generateMapStyle(this.effectiveTheme, {
         includeBuildings: this.includeBuildings,
         includeWater: this.includeWater,
@@ -234,10 +235,11 @@ export const useMapStore = defineStore("map", {
       this.selectedProductType = id;
       // Reset size to first available for this product type
       const sizes = getAvailableSizes(id, this.selectedFrameColor);
-      if (sizes.length > 0) {
-        const sizeId = sizes[0].sizeLabel.replace(/\s/g, "").replace("x", "x").replace("in", "");
+      const firstSize = sizes[0];
+      if (firstSize) {
+        const sizeId = firstSize.sizeLabel.replace(/\s/g, "").replace("x", "x").replace("in", "");
         // Try to match a PosterSizeId
-        const match = sizes[0];
+        const match = firstSize;
         if (match) {
           const posterSizeId = `${match.widthInches}x${match.heightInches}`;
           this.selectedSizeId = posterSizeId as any;
@@ -248,6 +250,15 @@ export const useMapStore = defineStore("map", {
     setAspectRatio(id: string) {
       if (!ASPECT_RATIO_IDS.includes(id)) return;
       this.selectedAspectRatioId = id;
+
+      // Sync size to first available for this ratio
+      const ratio = getAspectRatioById(id);
+      if (ratio && ratio.sizes.length > 0) {
+        const size = ratio.sizes[0];
+        if (size) {
+          this.selectedSizeId = `${size.widthInches}x${size.heightInches}` as any;
+        }
+      }
     },
 
     setPngResolution(id: string) {
