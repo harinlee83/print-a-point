@@ -1786,7 +1786,8 @@ button.ghost {
 
 
 .home-carousel-card {
-  width: clamp(220px, 22vw, 320px);
+  height: clamp(240px, 42vh, 480px);
+  aspect-ratio: 3 / 4;
   border: 1px solid color-mix(in oklab, var(--line) 60%, transparent);
   border-radius: 6px;
   background: var(--surface);
@@ -1808,8 +1809,8 @@ button.ghost {
 
 .home-carousel-card img {
   width: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
   display: block;
   background: #262320;
 }
@@ -2358,6 +2359,6 @@ button.ghost {
   }
   
   .home-carousel-card {
-    width: clamp(280px, 28vw, 400px);
+    height: clamp(380px, 45vh, 600px);
   }
 }
