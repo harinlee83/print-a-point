@@ -9,52 +9,53 @@
 
     <main class="home-main">
       <div class="home-fold">
-      <!-- Carousel row 1 -->
-      <div class="home-carousel-section home-carousel-section--top">
-        <div class="home-carousel" aria-label="Poster gallery row 1">
-          <div class="home-carousel-track">
-            <NuxtLink
-              v-for="(item, idx) in carouselRow1"
-              :key="`r1-${item.src}-${idx}`"
-              class="home-carousel-card"
-              :to="item.ctaLink"
-            >
-              <img :src="item.src" :alt="item.alt" loading="eager" />
-              <div class="home-carousel-meta">
-                <p>{{ item.city }}</p>
-              </div>
-            </NuxtLink>
+        <!-- Carousel row 1 -->
+        <div class="home-carousel-section">
+          <div class="home-carousel" aria-label="Poster gallery row 1">
+            <div class="home-carousel-track">
+              <NuxtLink
+                v-for="(item, idx) in carouselRow1"
+                :key="`r1-${item.src}-${idx}`"
+                class="home-carousel-card"
+                :to="item.ctaLink"
+              >
+                <img :src="item.src" :alt="item.alt" loading="eager" />
+                <div class="home-carousel-meta">
+                  <p>{{ item.city }}</p>
+                </div>
+              </NuxtLink>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Headline + CTA between carousels -->
-      <section class="home-hero">
-        <div class="home-hero-copy">
-          <h1>Turn Coordinates<br /><em>into Art</em></h1>
-          <p class="home-hero-subtext">Design unlimited maps for free</p>
-        </div>
-        <NuxtLink class="home-cta" to="/create">Create Your Map</NuxtLink>
-      </section>
-
-      <!-- Carousel row 2 -->
-      <div class="home-carousel-section">
-        <div class="home-carousel home-carousel--reverse" aria-label="Poster gallery row 2">
-          <div class="home-carousel-track home-carousel-track--reverse">
-            <NuxtLink
-              v-for="(item, idx) in carouselRow2"
-              :key="`r2-${item.src}-${idx}`"
-              class="home-carousel-card"
-              :to="item.ctaLink"
-            >
-              <img :src="item.src" :alt="item.alt" loading="eager" />
-              <div class="home-carousel-meta">
-                <p>{{ item.city }}</p>
-              </div>
-            </NuxtLink>
+        <!-- Carousel row 2 -->
+        <div class="home-carousel-section">
+          <div class="home-carousel home-carousel--reverse" aria-label="Poster gallery row 2">
+            <div class="home-carousel-track home-carousel-track--reverse">
+              <NuxtLink
+                v-for="(item, idx) in carouselRow2"
+                :key="`r2-${item.src}-${idx}`"
+                class="home-carousel-card"
+                :to="item.ctaLink"
+              >
+                <img :src="item.src" :alt="item.alt" loading="eager" />
+                <div class="home-carousel-meta">
+                  <p>{{ item.city }}</p>
+                </div>
+              </NuxtLink>
+            </div>
           </div>
         </div>
-      </div>
+
+        <!-- Headline + CTA floating over carousels -->
+        <div class="home-hero-overlay"></div>
+        <section class="home-hero">
+          <div class="home-hero-copy">
+            <h1>Turn Coordinates<br /><em>into Art</em></h1>
+            <p class="home-hero-subtext">Design unlimited maps for free</p>
+          </div>
+          <NuxtLink class="home-cta" to="/create">Create Your Map</NuxtLink>
+        </section>
       </div>
 
       <div class="home-divider-wrapper">
