@@ -48,7 +48,7 @@
           <div class="home-hero-glass"></div>
           <div class="home-hero-content">
             <h1>Turn Coordinates<br /><em>into Art</em></h1>
-            <p class="home-hero-subtext">Design unlimited maps for free</p>
+            <p class="home-hero-subtext">Design unlimited high-resolution maps for free</p>
             <NuxtLink class="home-cta" to="/create">Create Your Map</NuxtLink>
           </div>
         </section>
@@ -82,12 +82,50 @@
         </div>
       </section>
 
+      <div class="home-divider-wrapper">
+        <hr class="home-divider" />
+      </div>
+
+      <!-- How It Works -->
+      <section class="home-steps">
+        <div class="home-steps-header">
+          <h2>Create Your Map<br /><em>in Minutes</em></h2>
+        </div>
+        <div class="home-steps-grid">
+          <div class="home-step">
+            <span class="home-step-number">01</span>
+            <h3>Choose Your Location</h3>
+            <p>Enter a city, address, or coordinates.</p>
+          </div>
+          <div class="home-step">
+            <span class="home-step-number">02</span>
+            <h3>Customize Your Style</h3>
+            <p>Pick colors, labels, and layout.</p>
+          </div>
+          <div class="home-step">
+            <span class="home-step-number">03</span>
+            <h3>Download or Print</h3>
+            <p>Get a high-resolution poster ready to frame.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="home-divider-wrapper">
+        <hr class="home-divider" />
+      </div>
+
       <!-- FAQ -->
       <FaqSection />
 
       <!-- Bottom CTA -->
       <section class="home-bottom">
-        <p>Museum-quality prints. Shipped worldwide. Powered by Printful.</p>
+        <h2>Start Creating <em>Today</em></h2>
+        <div class="home-bottom-trust">
+          <span>Real Map Data</span>
+          <span>Custom Styling</span>
+          <span>Secure Payment by Stripe</span>
+          <span>Reliable Shipping by Printful</span>
+        </div>
         <NuxtLink class="home-cta" to="/create">Create Your Map</NuxtLink>
       </section>
     </main>
