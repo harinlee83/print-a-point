@@ -1,4 +1,11 @@
-export type PosterSizeId = "18x24" | "24x36" | "30x40";
+export type PosterSizeId =
+  | "5x7" | "6x6" | "8x8" | "8x10" | "8x12" | "9x12"
+  | "10x10" | "10x20" | "11x14" | "12x12" | "12x16" | "12x18" | "12x24" | "12x36"
+  | "14x14" | "16x16" | "16x20" | "16x24" | "16x32" | "16x48"
+  | "18x18" | "18x24" | "18x26" | "20x20" | "20x24" | "20x28" | "20x30" | "20x40" | "20x60"
+  | "A1" | "A2" | "24x24" | "24x30" | "24x32" | "24x36" | "24x48"
+  | "26x26" | "26x40" | "28x28" | "28x40" | "30x30" | "30x40" | "30x60"
+  | "32x32" | "32x48" | "36x36" | "37x37" | "40x55" | "40x60";
 
 export interface PosterSize {
   id: PosterSizeId;
@@ -12,40 +19,63 @@ export interface PosterSize {
   defaultPriceCents: number;
 }
 
+function s(id: PosterSizeId, w: number, h: number, price: number = 8900): PosterSize {
+  return {
+    id,
+    label: `${w} x ${h} in`,
+    widthInches: w,
+    heightInches: h,
+    widthCm: Math.round(w * 2.54 * 10) / 10,
+    heightCm: Math.round(h * 2.54 * 10) / 10,
+    targetWidthPx: Math.round(w * 300),
+    targetHeightPx: Math.round(h * 300),
+    defaultPriceCents: price,
+  };
+}
+
 export const POSTER_SIZES: PosterSize[] = [
-  {
-    id: "18x24",
-    label: "18 x 24 in",
-    widthInches: 18,
-    heightInches: 24,
-    widthCm: 45.7,
-    heightCm: 61,
-    targetWidthPx: 5400,
-    targetHeightPx: 7200,
-    defaultPriceCents: 8900,
-  },
-  {
-    id: "24x36",
-    label: "24 x 36 in",
-    widthInches: 24,
-    heightInches: 36,
-    widthCm: 61,
-    heightCm: 91.4,
-    targetWidthPx: 7200,
-    targetHeightPx: 10800,
-    defaultPriceCents: 12900,
-  },
-  {
-    id: "30x40",
-    label: "30 x 40 in",
-    widthInches: 30,
-    heightInches: 40,
-    widthCm: 76.2,
-    heightCm: 101.6,
-    targetWidthPx: 9000,
-    targetHeightPx: 12000,
-    defaultPriceCents: 16900,
-  },
+  // 1:1
+  s("6x6", 6, 6), s("8x8", 8, 8), s("10x10", 10, 10), s("12x12", 12, 12),
+  s("14x14", 14, 14), s("16x16", 16, 16), s("18x18", 18, 18), s("20x20", 20, 20),
+  s("24x24", 24, 24), s("26x26", 26, 26), s("28x28", 28, 28), s("30x30", 30, 30),
+  s("32x32", 32, 32), s("36x36", 36, 36), s("37x37", 37, 37),
+
+  // 4:5
+  s("8x10", 8, 10), s("16x20", 16, 20), s("24x30", 24, 30),
+
+  // 3:4
+  s("9x12", 9, 12), s("12x16", 12, 16), s("18x24", 18, 24), s("24x32", 24, 32), s("30x40", 30, 40),
+
+  // 2:3
+  s("8x12", 8, 12), s("12x18", 12, 18), s("16x24", 16, 24), s("20x30", 20, 30), s("24x36", 24, 36), s("32x48", 32, 48), s("40x60", 40, 60),
+
+  // 5:7
+  s("5x7", 5, 7), s("20x28", 20, 28),
+
+  // 11:14
+  s("11x14", 11, 14),
+
+  // 1:2
+  s("10x20", 10, 20), s("12x24", 12, 24), s("16x32", 16, 32), s("20x40", 20, 40), s("24x48", 24, 48), s("30x60", 30, 60),
+
+  // 1:3
+  s("12x36", 12, 36), s("16x48", 16, 48), s("20x60", 20, 60),
+
+  // 9:13
+  s("18x26", 18, 26),
+
+  // 13:20
+  s("26x40", 26, 40),
+
+  // 7:10
+  s("28x40", 28, 40),
+
+  // A sizes
+  s("A1", 23.4, 33.1),
+  s("A2", 16.5, 23.4),
+
+  // 8:11
+  s("40x55", 40, 55),
 ];
 
 export const DEFAULT_POSTER_SIZE_ID: PosterSizeId = "18x24";

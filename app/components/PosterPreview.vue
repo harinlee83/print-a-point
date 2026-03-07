@@ -1,6 +1,6 @@
 <template>
   <section class="preview-panel">
-    <div class="poster-viewport">
+    <div ref="viewportRef" class="poster-viewport">
       <div
         :class="productPreviewClasses"
         :style="productPreviewStyle"
@@ -9,10 +9,13 @@
         ref="frameRef"
         class="poster-frame"
         :class="{ 'is-landscape': store.aspectRatio > 1 }"
-        :style="{
-          '--poster-aspect': store.aspectRatio,
-          '--poster-bg': posterBgColor,
-        }"
+        :style="[
+          {
+            '--poster-aspect': store.aspectRatio,
+            '--poster-bg': posterBgColor,
+          },
+          frameStyle
+        ]"
       >
         <div
           ref="shapeContainerRef"
@@ -130,6 +133,7 @@ const emit = defineEmits<{
 const store = useMapStore();
 
 const mapRef = ref<MapLibreMap | null>(null);
+const viewportRef = ref<HTMLDivElement | null>(null);
 const frameRef = ref<HTMLDivElement | null>(null);
 const shapeContainerRef = ref<HTMLDivElement | null>(null);
 const dragOverlayRef = ref<HTMLDivElement | null>(null);
@@ -202,18 +206,40 @@ const countryLabel = computed(() => {
   return "Earth";
 });
 
-const frameWidth = ref(0);
-const frameHeight = ref(0);
+const viewportWidth = ref(0);
+const viewportHeight = ref(0);
 
-const effectiveShapeScale = computed(() => store.mapShapeScale ?? 1);
+const frameStyle = computed(() => {
+  if (viewportWidth.value === 0 || viewportHeight.value === 0) return {};
+
+  const ratio = store.aspectRatio;
+  let w = viewportWidth.value;
+  let h = viewportWidth.value / ratio;
+
+  if (h > viewportHeight.value) {
+    h = viewportHeight.value;
+    w = h * ratio;
+  }
+
+  return {
+    width: `${w}px`,
+    height: `${h}px`,
+  };
+});
 
 const computedClipPath = computed(() => {
   if (store.mapShape === "none") return undefined;
-  if (frameWidth.value > 0 && frameHeight.value > 0) {
+
+  // Use the calculated frame dimensions for clip path scaling
+  const fStyle = frameStyle.value as { width?: string; height?: string };
+  const w = fStyle.width ? parseFloat(fStyle.width) : 0;
+  const h = fStyle.height ? parseFloat(fStyle.height) : 0;
+
+  if (w > 0 && h > 0) {
     return getScaledCssClipPath(
       store.mapShape,
-      frameWidth.value,
-      frameHeight.value,
+      w,
+      h,
       effectiveShapeScale.value,
     );
   }
@@ -336,17 +362,17 @@ let resizeObserver: ResizeObserver | null = null;
 onMounted(() => {
   if (!import.meta.client) return;
 
-  if (!frameRef.value) return;
+  if (!viewportRef.value) return;
 
   resizeObserver = new ResizeObserver((entries) => {
     if (!entries.length) return;
     const rect = entries[0].contentRect;
+    viewportWidth.value = rect.width;
+    viewportHeight.value = rect.height;
     setContainerWidth(rect.width);
-    frameWidth.value = rect.width;
-    frameHeight.value = rect.height;
   });
 
-  resizeObserver.observe(frameRef.value);
+  resizeObserver.observe(viewportRef.value);
 });
 
 onUnmounted(() => {
