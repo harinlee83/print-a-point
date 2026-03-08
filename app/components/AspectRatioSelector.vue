@@ -3,7 +3,7 @@
     <h2>Aspect Ratio</h2>
     <div class="ratio-grid">
       <button
-        v-for="r in ratios"
+        v-for="r in validRatios"
         :key="r.id"
         type="button"
         :class="['ratio-card', { 'is-active': r.id === modelValue }]"
@@ -22,16 +22,27 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import type { AspectRatio } from "~~/shared/aspectRatios";
+import type { ProductTypeId, FrameColorId } from "~~/shared/productCatalog";
+import { hasAnyExactSizeMatch } from "~~/shared/productCatalog";
 
-defineProps<{
+const props = defineProps<{
   ratios: AspectRatio[];
   modelValue: string;
+  productType: ProductTypeId;
+  frameColor?: FrameColorId;
 }>();
 
 defineEmits<{
   "update:modelValue": [value: string];
 }>();
+
+const validRatios = computed(() => {
+  return props.ratios.filter((r) => 
+    hasAnyExactSizeMatch(props.productType, r.w / r.h, props.frameColor)
+  );
+});
 
 function shapeStyle(r: AspectRatio) {
   const maxH = 36; // px - max height of shape preview

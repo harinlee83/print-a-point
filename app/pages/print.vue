@@ -18,37 +18,53 @@
       </div>
 
       <div class="print-options-col">
-        <ProductTypeSelector
-          v-model="productTypeModel"
-          :products="PRODUCT_TYPES"
-        />
+        <div class="print-options-scroll">
+          <ProductTypeSelector
+            v-model="productTypeModel"
+            :products="PRODUCT_TYPES"
+          />
 
-        <FrameColorSelector
-          v-if="store.needsFrameSelection"
-          v-model="frameColorModel"
-          :options="store.selectedProduct.frameOptions"
-        />
+          <FrameColorSelector
+            v-if="store.needsFrameSelection"
+            v-model="frameColorModel"
+            :options="store.selectedProduct.frameOptions"
+          />
 
-        <SizeSelector
-          v-model="sizeModel"
-          :sizes="rankedSizes"
-        />
+          <!-- Product Details -->
+          <section class="panel-block">
+            <h2>Product Info</h2>
+            <div class="product-details-content">
+              <p class="product-description">{{ store.selectedProduct.description }}</p>
+              <ul v-if="store.selectedProduct.features && store.selectedProduct.features.length" class="product-features">
+                <li v-for="feature in store.selectedProduct.features" :key="feature">{{ feature }}</li>
+              </ul>
+            </div>
+          </section>
 
-        <div class="action-row">
-          <button
-            type="button"
-            class="generate-btn"
-            :disabled="store.isCheckoutLoading"
-            @click="startCheckout"
-          >
-            {{ buyButtonLabel }}
-          </button>
-          <p class="subtle-note">
-            Checkout and fulfillment are securely powered by Stripe and Printful.
-          </p>
+          <SizeSelector
+            v-model="sizeModel"
+            :sizes="rankedSizes"
+            :orientation="store.selectedOrientation"
+          />
         </div>
 
-        <p v-if="store.error" class="error">{{ store.error }}</p>
+        <div class="print-options-fixed">
+          <div class="action-row">
+            <button
+              type="button"
+              class="generate-btn"
+              :disabled="store.isCheckoutLoading"
+              @click="startCheckout"
+            >
+              {{ buyButtonLabel }}
+            </button>
+            <p class="subtle-note">
+              Checkout and fulfillment are securely powered by Stripe and Printful.
+            </p>
+          </div>
+
+          <p v-if="store.error" class="error">{{ store.error }}</p>
+        </div>
       </div>
     </main>
   </div>
@@ -179,3 +195,27 @@ const startCheckout = async () => {
   }
 };
 </script>
+
+<style scoped>
+.product-details-content {
+  color: var(--ink);
+}
+
+.product-description {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.product-features {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.product-features li {
+  margin-bottom: 0.4rem;
+}
+</style>

@@ -25,6 +25,7 @@ export interface ProductType {
   label: string;
   shortLabel: string;
   description: string;
+  features?: string[];
   printfulProductId: number | null;
   hasFrameOptions: boolean;
   frameOptions: FrameOption[];
@@ -123,7 +124,14 @@ export const PRODUCT_TYPES: ProductType[] = [
     id: "poster",
     label: "Enhanced Matte Paper Poster",
     shortLabel: "Poster",
-    description: "Museum-quality matte print on enhanced paper.",
+    description: "Bring out the best in your artwork with these museum-quality posters made of thick matte paper. Each poster is printed with multicolor, water-based inkjet printing technique that yields brilliant prints to brighten up any room.",
+    features: [
+      "Paper thickness: 10.3 mil (0.26 mm)",
+      "Paper weight: 189 g/m²",
+      "Opacity: 94%",
+      "ISO brightness: 104%",
+      "Paper is sourced from Japan",
+    ],
     printfulProductId: 1,
     hasFrameOptions: false,
     frameOptions: [],
@@ -133,7 +141,15 @@ export const PRODUCT_TYPES: ProductType[] = [
     id: "framed-poster",
     label: "Enhanced Matte Paper Framed Poster",
     shortLabel: "Framed Poster",
-    description: "Matte poster in a sleek frame. Available in black, white, or walnut.",
+    description: "A framed, enhanced poster whose museum-quality matte paper will give your design a polished and sophisticated look. What's more, it's already framed and ready to adorn any home or office. Each poster is printed with multicolor, water-based inkjet printing technique that gives you the best possible outcome.",
+    features: [
+      "Ayous wood .75″ (1.9 cm) thick frame from renewable forests",
+      "Paper thickness: 10.3 mil (0.26 mm)",
+      "Paper weight: 189 g/m²",
+      "Lightweight",
+      "Acrylite front protector",
+      "Hanging hardware included",
+    ],
     printfulProductId: 2,
     hasFrameOptions: true,
     frameOptions: FRAME_OPTIONS,
@@ -144,6 +160,12 @@ export const PRODUCT_TYPES: ProductType[] = [
     label: "Stretched Canvas",
     shortLabel: "Canvas",
     description: "Gallery-wrapped stretched canvas with solid support frame.",
+    features: [
+      "Acid-free, PH-neutral, poly-cotton base",
+      "20.5 mil (0.5 mm) thick poly-cotton blend canvas",
+      "Canvas fabric weight: 13.9 oz/yd2(470 g/m²)",
+      "Hand-glued solid wood stretcher bars",
+    ],
     printfulProductId: 3,
     hasFrameOptions: false,
     frameOptions: [],
@@ -154,6 +176,12 @@ export const PRODUCT_TYPES: ProductType[] = [
     label: "Framed Canvas",
     shortLabel: "Framed Canvas",
     description: "Stretched canvas in a floating frame. Available in black, white, or walnut.",
+    features: [
+      "Pine tree frame",
+      "Frame thickness: 1.25″ (3.18 cm)",
+      "Canvas fabric weight: 13.9 oz/yd2(470 g/m²)",
+      "Open back with rubber pads and hanging hardware",
+    ],
     printfulProductId: 614,
     hasFrameOptions: true,
     frameOptions: FRAME_OPTIONS,
@@ -211,44 +239,46 @@ export function formatUsd(cents: number): string {
   }).format(cents / 100);
 }
 
-export type VariantMatchLevel = "best" | "near" | "mismatch";
-
-export interface RankedVariant extends ProductVariant {
-  matchLevel: VariantMatchLevel;
+export interface RecommendedVariant extends ProductVariant {
   ratioDifference: number;
 }
 
 /**
- * Ranks variants based on how well they match the targeted design aspect ratio.
+ * Filters variants to strictly match the targeted design aspect ratio.
  */
 export function getRecommendedVariants(
   productTypeId: ProductTypeId,
   designRatio: number, // width / height
   frameColorId?: FrameColorId,
-): RankedVariant[] {
+): RecommendedVariant[] {
   const allVariants = getAvailableSizes(productTypeId, frameColorId);
 
   return allVariants
     .map((v) => {
-      const variantRatio = v.widthInches / v.heightInches;
-      const diff = Math.abs(variantRatio - designRatio);
-
-      let matchLevel: VariantMatchLevel = "mismatch";
-      if (diff < 0.01) matchLevel = "best";
-      else if (diff < 0.15) matchLevel = "near";
+      const ratio1 = v.widthInches / v.heightInches;
+      const ratio2 = v.heightInches / v.widthInches;
+      
+      // Calculate diff against both portrait and landscape physical sizes
+      const diff1 = Math.abs(ratio1 - designRatio);
+      const diff2 = Math.abs(ratio2 - designRatio);
+      const diff = Math.min(diff1, diff2);
 
       return {
         ...v,
-        matchLevel,
         ratioDifference: diff,
       };
     })
-    .sort((a, b) => {
-      // Sort by match level first, then by ratio difference
-      const score = { best: 0, near: 1, mismatch: 2 };
-      if (score[a.matchLevel] !== score[b.matchLevel]) {
-        return score[a.matchLevel] - score[b.matchLevel];
-      }
-      return a.ratioDifference - b.ratioDifference;
-    });
+    .filter((v) => v.ratioDifference < 0.01) // Strict exact match only
+    .sort((a, b) => a.targetWidthPx - b.targetWidthPx);
+}
+
+/**
+ * Checks if a given design aspect ratio has at least one exact physical setup match
+ */
+export function hasAnyExactSizeMatch(
+  productTypeId: ProductTypeId,
+  designRatio: number,
+  frameColorId?: FrameColorId,
+): boolean {
+  return getRecommendedVariants(productTypeId, designRatio, frameColorId).length > 0;
 }

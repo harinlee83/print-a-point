@@ -1,5 +1,0 @@
-ok in this directory i created a PRD.md that outlines what I want to build. I also
-  added the core python map to poster engine logic in /maptoposter and then a fully
-  client side react version of maptoposter in /terraink. CAREFULLY read the PRD.md, and
-  examine the source codes of both maptoposeter and terraink. You will build off those
-  as examples. YOU WILL NEED TRANSLATE THE REACT CODE OVER TO VUE CODE FOR THE NUXT FRAMEWORK. in short, we will be building out a fully client side Nuxt JS version of terraink where users will be able to custom their maps and be able to print it using stripe. Create a PROGRESS.md as you plan out steps and update progress in PROGRESS.md as you finish tasks such that any agent can pick up where you left off. In terms of styling, just reach feature and style parity with terraink. we will worry about that later. JUST DO NOT MAKE IT LOOK LIKE GENERIC AI slop. This is not in the PRD but also create a beautiful landing pages with spaces for a gallery of images and sample prints to showcase.

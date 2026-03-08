@@ -627,6 +627,8 @@
       <AspectRatioSelector
         v-model="aspectRatioModel"
         :ratios="effectiveRatios"
+        :productType="store.selectedProductType"
+        :frameColor="store.selectedFrameColor"
       />
 
       <div class="action-row">
