@@ -107,10 +107,21 @@ export default defineEventHandler(async (event) => {
     },
   };
 
+  console.log("[webhook] Order data assembled:", JSON.stringify(orderData, null, 2));
+
   if (process.env.NUXT_PRINTFUL_MOCK_API === "true") {
-    console.log("🛠 [MOCK MODE] Intercepted Printful Order Creation! Simulating success without hitting Printful API.", JSON.stringify(orderData, null, 2));
+    console.log("[webhook] MOCK MODE — skipping Printful API call");
   } else {
-    await createPrintfulOrder(orderData);
+    try {
+      const result = await createPrintfulOrder(orderData);
+      console.log("[webhook] Printful order created:", JSON.stringify(result, null, 2));
+    } catch (err: any) {
+      console.error("[webhook] Printful API error:", err?.data ?? err?.message ?? err);
+      throw createError({
+        statusCode: 502,
+        statusMessage: `Printful order failed: ${err?.data?.error?.message ?? err?.message ?? "Unknown error"}`,
+      });
+    }
   }
 
 
