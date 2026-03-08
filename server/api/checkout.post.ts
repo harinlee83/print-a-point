@@ -14,6 +14,7 @@ interface CheckoutRequestBody {
   displayCity?: string;
   displayCountry?: string;
   themeId?: string;
+  orientation?: string;
 }
 
 function resolveBaseUrl(event: H3Event): string {
@@ -140,13 +141,13 @@ export default defineEventHandler(async (event) => {
       },
     ],
     shipping_address_collection: {
-      allowed_countries: ["US"],
+      allowed_countries: allowedCountries as any,
     },
     phone_number_collection: {
       enabled: true,
     },
     automatic_tax: {
-      enabled: true,
+      enabled: false,
     },
     metadata: {
       imageUrl,
@@ -158,6 +159,7 @@ export default defineEventHandler(async (event) => {
       displayCity,
       displayCountry,
       themeId,
+      orientation: String(body.orientation ?? "portrait"),
     },
     success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/create`,

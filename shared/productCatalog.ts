@@ -106,15 +106,16 @@ function deriveEnvKey(type: string, size: PosterSize, color?: string): string {
 function posterVariants(): ProductVariant[] {
   return POSTER_SIZES.map((s) => {
     const variantId = findPrintfulVariantId(1, s.widthInches, s.heightInches);
+    if (variantId === undefined) return undefined;
     const price = findListingPriceCents("poster", variantId, s.widthInches, s.heightInches);
     return {
       ...s,
       sizeLabel: s.label,
       envVarKey: deriveEnvKey("poster", s),
-      printfulVariantId: variantId ?? s.printfulVariantId,
+      printfulVariantId: variantId,
       defaultPriceCents: price ?? s.defaultPriceCents,
     };
-  });
+  }).filter((v) => v !== undefined) as ProductVariant[];
 }
 
 function framedPosterVariants(): ProductVariant[] {
@@ -122,19 +123,21 @@ function framedPosterVariants(): ProductVariant[] {
   FRAME_OPTIONS.forEach((color) => {
     POSTER_SIZES.forEach((s) => {
       const variantId = findPrintfulVariantId(2, s.widthInches, s.heightInches, color.id);
-      const price = findListingPriceCents("framed-poster", variantId, s.widthInches, s.heightInches);
-      variants.push({
-        sizeLabel: s.label,
-        widthInches: s.widthInches,
-        heightInches: s.heightInches,
-        widthCm: s.widthCm,
-        heightCm: s.heightCm,
-        targetWidthPx: s.targetWidthPx,
-        targetHeightPx: s.targetHeightPx,
-        defaultPriceCents: price ?? (s.defaultPriceCents + 3000),
-        envVarKey: deriveEnvKey("framed-poster", s, color.id),
-        printfulVariantId: variantId,
-      });
+      if (variantId !== undefined) {
+        const price = findListingPriceCents("framed-poster", variantId, s.widthInches, s.heightInches);
+        variants.push({
+          sizeLabel: s.label,
+          widthInches: s.widthInches,
+          heightInches: s.heightInches,
+          widthCm: s.widthCm,
+          heightCm: s.heightCm,
+          targetWidthPx: s.targetWidthPx,
+          targetHeightPx: s.targetHeightPx,
+          defaultPriceCents: price ?? (s.defaultPriceCents + 3000),
+          envVarKey: deriveEnvKey("framed-poster", s, color.id),
+          printfulVariantId: variantId,
+        });
+      }
     });
   });
   return variants;
@@ -143,6 +146,7 @@ function framedPosterVariants(): ProductVariant[] {
 function canvasVariants(): ProductVariant[] {
   return POSTER_SIZES.map((s) => {
     const variantId = findPrintfulVariantId(3, s.widthInches, s.heightInches);
+    if (variantId === undefined) return undefined;
     const price = findListingPriceCents("canvas", variantId, s.widthInches, s.heightInches);
     return {
       sizeLabel: s.label,
@@ -156,7 +160,7 @@ function canvasVariants(): ProductVariant[] {
       envVarKey: deriveEnvKey("canvas", s),
       printfulVariantId: variantId,
     };
-  });
+  }).filter((v) => v !== undefined) as ProductVariant[];
 }
 
 function framedCanvasVariants(): ProductVariant[] {
@@ -164,19 +168,21 @@ function framedCanvasVariants(): ProductVariant[] {
   FRAME_OPTIONS.forEach((color) => {
     POSTER_SIZES.forEach((s) => {
       const variantId = findPrintfulVariantId(614, s.widthInches, s.heightInches, color.id);
-      const price = findListingPriceCents("framed-canvas", variantId, s.widthInches, s.heightInches);
-      variants.push({
-        sizeLabel: s.label,
-        widthInches: s.widthInches,
-        heightInches: s.heightInches,
-        widthCm: s.widthCm,
-        heightCm: s.heightCm,
-        targetWidthPx: s.targetWidthPx,
-        targetHeightPx: s.targetHeightPx,
-        defaultPriceCents: price ?? (s.defaultPriceCents + 6000),
-        envVarKey: deriveEnvKey("framed-canvas", s, color.id),
-        printfulVariantId: variantId,
-      });
+      if (variantId !== undefined) {
+        const price = findListingPriceCents("framed-canvas", variantId, s.widthInches, s.heightInches);
+        variants.push({
+          sizeLabel: s.label,
+          widthInches: s.widthInches,
+          heightInches: s.heightInches,
+          widthCm: s.widthCm,
+          heightCm: s.heightCm,
+          targetWidthPx: s.targetWidthPx,
+          targetHeightPx: s.targetHeightPx,
+          defaultPriceCents: price ?? (s.defaultPriceCents + 6000),
+          envVarKey: deriveEnvKey("framed-canvas", s, color.id),
+          printfulVariantId: variantId,
+        });
+      }
     });
   });
   return variants;

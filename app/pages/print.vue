@@ -169,6 +169,7 @@ const startCheckout = async () => {
       displayCity: store.displayCity,
       displayCountry: store.displayCountry,
       themeId: store.selectedThemeId,
+      orientation: store.selectedOrientation,
     };
     if (store.needsFrameSelection) {
       checkoutBody.frameColor = store.selectedFrameColor;

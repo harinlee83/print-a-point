@@ -86,11 +86,12 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await createPrintfulOrder({
+  const orderData = {
     externalId: `stripe_${session.id}`,
     imageUrl,
     variantId,
     productTypeId,
+    orientation: String(metadata.orientation || "portrait"),
     quantity: 1,
     email: customerEmail,
     recipient: {
@@ -103,7 +104,14 @@ export default defineEventHandler(async (event) => {
       countryCode: assertString(address.country, "shipping_details.address.country"),
       phone: String(session.customer_details?.phone ?? "").trim() || undefined,
     },
-  });
+  };
+
+  if (process.env.NUXT_PRINTFUL_MOCK_API === "true") {
+    console.log("🛠 [MOCK MODE] Intercepted Printful Order Creation! Simulating success without hitting Printful API.", JSON.stringify(orderData, null, 2));
+  } else {
+    await createPrintfulOrder(orderData);
+  }
+
 
   return { received: true };
 });

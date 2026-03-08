@@ -137,6 +137,7 @@ export interface CreatePrintfulOrderInput {
     phone?: string;
   };
   productTypeId?: string;
+  orientation?: string;
 }
 
 export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
@@ -158,7 +159,7 @@ export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
     },
     body: {
       external_id: input.externalId,
-      confirm: true,
+      confirm: false,
       update_existing: false,
       recipient: {
         name: input.recipient.name,
@@ -179,13 +180,17 @@ export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
             {
               type: "default",
               url: input.imageUrl,
-              // If it's a canvas, we want to scale it up slightly to ensure 
-              // it covers the wrap area (bleed) completely.
+              // If landscape, rotate 90 degrees
+              ...(input.orientation === "landscape" && {
+                position: { rotate: 90 }
+              }),
+              // Canvas scaling is applied alongside rotation if active
               ...(input.productTypeId?.includes("canvas") && {
                 position: {
-                  width: 1.1, // Scale up to 110%
+                  ...(input.orientation === "landscape" ? { rotate: 90 } : {}),
+                  width: 1.1, 
                   height: 1.1,
-                  top: -0.05, // Offset to keep it centered
+                  top: -0.05,
                   left: -0.05
                 }
               })
