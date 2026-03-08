@@ -67,7 +67,8 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const shipping = session.shipping_details;
+  const sessionAny = session as any;
+  const shipping = session.shipping_details ?? sessionAny.collected_information?.shipping_details;
   const address = shipping?.address;
   if (!shipping || !address) {
     throw createError({
