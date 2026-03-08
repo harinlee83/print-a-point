@@ -140,7 +140,7 @@ export default defineEventHandler(async (event) => {
       },
     ],
     shipping_address_collection: {
-      allowed_countries: allowedCountries as any,
+      allowed_countries: ["US"],
     },
     phone_number_collection: {
       enabled: true,

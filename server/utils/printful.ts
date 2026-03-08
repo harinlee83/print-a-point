@@ -101,7 +101,7 @@ export async function fetchPrintfulCountries(): Promise<string[]> {
 export async function getAllowedCountriesForCheckout() {
   const config = useRuntimeConfig();
   const allowedCountries =
-    process.env.NUXT_ALLOWED_COUNTRIES || config.allowedCountries;
+    process.env.NUXT_STRIPE_ALLOWED_COUNTRIES || config.allowedCountries;
 
   const configured = parseCountryCsv(allowedCountries);
   if (configured.length > 0) {

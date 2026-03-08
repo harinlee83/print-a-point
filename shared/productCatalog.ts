@@ -40,6 +40,62 @@ const FRAME_OPTIONS: FrameOption[] = [
 
 import { POSTER_SIZES, type PosterSize } from "./posterSizes";
 
+import productsData from "../products.json";
+import canvasPrices from "../listing_prices/canvas.json";
+import posterPrices from "../listing_prices/poster.json";
+import framedCanvasPrices from "../listing_prices/framed_canvas.json";
+import framedPosterPrices from "../listing_prices/framed_poster.json";
+
+function findPrintfulVariantId(productId: number, w: number, h: number, colorId?: string): number | undefined {
+  const product = (productsData as any[]).find((p) => p.productId === productId);
+  if (!product) return undefined;
+  
+  const sortedTarget = [w, h].sort((a,b)=>a-b);
+  
+  for (const v of product.variants) {
+    const match = v.size.match(/(\d+(?:\.\d+)?)[^\d]+(\d+(?:\.\d+)?)/);
+    if (match) {
+      const parsed = [Number(match[1]), Number(match[2])].sort((a,b)=>a-b);
+      if (parsed[0] === sortedTarget[0] && parsed[1] === sortedTarget[1]) {
+        if (colorId) {
+           const mappedColor = colorId === 'oak' ? 'red oak' : colorId;
+           if (v.color && v.color.toLowerCase() === mappedColor.toLowerCase()) {
+             return v.id;
+           }
+        } else {
+           return v.id;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+function findListingPriceCents(
+  productTypeId: ProductTypeId,
+  variantId: number | undefined,
+  w: number,
+  h: number
+): number | undefined {
+  const sortedTarget = [w, h].sort((a,b)=>a-b);
+  const sizeKey = `${sortedTarget[0]}x${sortedTarget[1]}`;
+
+  if (productTypeId === "poster") {
+    const found = (posterPrices as any[]).find(p => p.id === variantId);
+    if (found) return Math.round(Number(found.listingPrice) * 100);
+  } else if (productTypeId === "canvas") {
+    const found = (canvasPrices as any[]).find(p => p.id === variantId);
+    if (found) return Math.round(Number(found.listingPrice) * 100);
+  } else if (productTypeId === "framed-poster") {
+    const found = (framedPosterPrices as any[]).find(p => p.size === sizeKey);
+    if (found) return Math.round(Number(found.listingPrice) * 100);
+  } else if (productTypeId === "framed-canvas") {
+    const found = (framedCanvasPrices as any[]).find(p => p.size === sizeKey);
+    if (found) return Math.round(Number(found.listingPrice) * 100);
+  }
+  return undefined;
+}
+
 function deriveEnvKey(type: string, size: PosterSize, color?: string): string {
   const sizePart = size.id.replace(".", "_");
   const typePart = type.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
@@ -48,20 +104,25 @@ function deriveEnvKey(type: string, size: PosterSize, color?: string): string {
 }
 
 function posterVariants(): ProductVariant[] {
-  return POSTER_SIZES.map((s) => ({
-    ...s,
-    sizeLabel: s.label,
-    envVarKey: deriveEnvKey("poster", s),
-    printfulVariantId: s.printfulVariantId,
-  }));
+  return POSTER_SIZES.map((s) => {
+    const variantId = findPrintfulVariantId(1, s.widthInches, s.heightInches);
+    const price = findListingPriceCents("poster", variantId, s.widthInches, s.heightInches);
+    return {
+      ...s,
+      sizeLabel: s.label,
+      envVarKey: deriveEnvKey("poster", s),
+      printfulVariantId: variantId ?? s.printfulVariantId,
+      defaultPriceCents: price ?? s.defaultPriceCents,
+    };
+  });
 }
 
 function framedPosterVariants(): ProductVariant[] {
   const variants: ProductVariant[] = [];
   FRAME_OPTIONS.forEach((color) => {
     POSTER_SIZES.forEach((s) => {
-      // Approximate framed price (base + $30 for frame)
-      const framedPrice = s.defaultPriceCents + 3000;
+      const variantId = findPrintfulVariantId(2, s.widthInches, s.heightInches, color.id);
+      const price = findListingPriceCents("framed-poster", variantId, s.widthInches, s.heightInches);
       variants.push({
         sizeLabel: s.label,
         widthInches: s.widthInches,
@@ -70,10 +131,9 @@ function framedPosterVariants(): ProductVariant[] {
         heightCm: s.heightCm,
         targetWidthPx: s.targetWidthPx,
         targetHeightPx: s.targetHeightPx,
-        defaultPriceCents: framedPrice,
+        defaultPriceCents: price ?? (s.defaultPriceCents + 3000),
         envVarKey: deriveEnvKey("framed-poster", s, color.id),
-        // Variant IDs for framed posters are complex, 
-        // normally we'd fetch these or have a full mapping.
+        printfulVariantId: variantId,
       });
     });
   });
@@ -81,28 +141,30 @@ function framedPosterVariants(): ProductVariant[] {
 }
 
 function canvasVariants(): ProductVariant[] {
-  return POSTER_SIZES.map((s) => ({
-    sizeLabel: s.label,
-    widthInches: s.widthInches,
-    heightInches: s.heightInches,
-    widthCm: s.widthCm,
-    heightCm: s.heightCm,
-    targetWidthPx: s.targetWidthPx,
-    targetHeightPx: s.targetHeightPx,
-    // Canvas price (base + $40)
-    defaultPriceCents: s.defaultPriceCents + 4000,
-    envVarKey: deriveEnvKey("canvas", s),
-    // Map panoramic canvases specifically as they are confirmed in products.json
-    printfulVariantId: s.id === "12x36" ? 19301 : s.id === "16x48" ? 19305 : s.id === "20x60" ? 19313 : undefined,
-  }));
+  return POSTER_SIZES.map((s) => {
+    const variantId = findPrintfulVariantId(3, s.widthInches, s.heightInches);
+    const price = findListingPriceCents("canvas", variantId, s.widthInches, s.heightInches);
+    return {
+      sizeLabel: s.label,
+      widthInches: s.widthInches,
+      heightInches: s.heightInches,
+      widthCm: s.widthCm,
+      heightCm: s.heightCm,
+      targetWidthPx: s.targetWidthPx,
+      targetHeightPx: s.targetHeightPx,
+      defaultPriceCents: price ?? (s.defaultPriceCents + 4000),
+      envVarKey: deriveEnvKey("canvas", s),
+      printfulVariantId: variantId,
+    };
+  });
 }
 
 function framedCanvasVariants(): ProductVariant[] {
   const variants: ProductVariant[] = [];
   FRAME_OPTIONS.forEach((color) => {
     POSTER_SIZES.forEach((s) => {
-      // Framed canvas price (base + $60)
-      const framedCanvasPrice = s.defaultPriceCents + 6000;
+      const variantId = findPrintfulVariantId(614, s.widthInches, s.heightInches, color.id);
+      const price = findListingPriceCents("framed-canvas", variantId, s.widthInches, s.heightInches);
       variants.push({
         sizeLabel: s.label,
         widthInches: s.widthInches,
@@ -111,8 +173,9 @@ function framedCanvasVariants(): ProductVariant[] {
         heightCm: s.heightCm,
         targetWidthPx: s.targetWidthPx,
         targetHeightPx: s.targetHeightPx,
-        defaultPriceCents: framedCanvasPrice,
+        defaultPriceCents: price ?? (s.defaultPriceCents + 6000),
         envVarKey: deriveEnvKey("framed-canvas", s, color.id),
+        printfulVariantId: variantId,
       });
     });
   });
