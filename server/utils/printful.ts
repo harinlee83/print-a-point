@@ -140,6 +140,12 @@ export interface CreatePrintfulOrderInput {
   orientation?: string;
 }
 
+function mapOrientation(orientation?: string): "horizontal" | "vertical" | null {
+  if (orientation === "landscape") return "horizontal";
+  if (orientation === "portrait") return "vertical";
+  return null;
+}
+
 export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
   const config = useRuntimeConfig();
   const printfulApiKey =
@@ -151,53 +157,66 @@ export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
     });
   }
 
-  return $fetch(`${PRINTFUL_API_BASE}/orders`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${printfulApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: {
-      external_id: input.externalId,
-      confirm: false,
-      update_existing: false,
-      recipient: {
-        name: input.recipient.name,
-        email: input.email,
-        address1: input.recipient.address1,
-        address2: input.recipient.address2,
-        city: input.recipient.city,
-        state_code: input.recipient.stateCode,
-        country_code: input.recipient.countryCode,
-        zip: input.recipient.zip,
-        phone: input.recipient.phone,
+  const orientation = mapOrientation(input.orientation);
+  const shouldConfirm = process.env.NUXT_PRINTFUL_CONFIRM_ORDERS === "true";
+
+  const orderResponse = await $fetch<{ data?: { id?: number } }>(
+    `${PRINTFUL_API_BASE}/v2/orders`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${printfulApiKey}`,
+        "Content-Type": "application/json",
       },
-      items: [
-        {
-          variant_id: Number(input.variantId),
-          quantity: input.quantity,
-          files: [
-            {
-              type: "default",
-              url: input.imageUrl,
-              // If landscape, rotate 90 degrees
-              ...(input.orientation === "landscape" && {
-                position: { rotate: 90 }
-              }),
-              // Canvas scaling is applied alongside rotation if active
-              ...(input.productTypeId?.includes("canvas") && {
-                position: {
-                  ...(input.orientation === "landscape" ? { rotate: 90 } : {}),
-                  width: 1.1, 
-                  height: 1.1,
-                  top: -0.05,
-                  left: -0.05
-                }
-              })
-            },
-          ],
+      body: {
+        external_id: input.externalId,
+        recipient: {
+          name: input.recipient.name,
+          email: input.email,
+          address1: input.recipient.address1,
+          address2: input.recipient.address2,
+          city: input.recipient.city,
+          state_code: input.recipient.stateCode,
+          country_code: input.recipient.countryCode,
+          zip: input.recipient.zip,
+          phone: input.recipient.phone,
         },
-      ],
+        order_items: [
+          {
+            source: "catalog",
+            catalog_variant_id: Number(input.variantId),
+            quantity: input.quantity,
+            ...(orientation && { orientation }),
+            placements: [
+              {
+                placement: "default",
+                technique: "digital",
+                layers: [
+                  {
+                    type: "file",
+                    url: input.imageUrl,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     },
-  });
+  );
+
+  if (shouldConfirm && orderResponse?.data?.id) {
+    await $fetch(
+      `${PRINTFUL_API_BASE}/v2/orders/${orderResponse.data.id}/confirmation`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${printfulApiKey}`,
+        },
+      },
+    );
+    console.log(`[printful] Order ${orderResponse.data.id} confirmed for fulfillment`);
+  }
+
+  return orderResponse;
 }

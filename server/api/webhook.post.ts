@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import Stripe from "stripe";
 import { createPrintfulOrder } from "~~/server/utils/printful";
 import { getStripeClient } from "~~/server/utils/stripe";
@@ -88,7 +89,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const orderData = {
-    externalId: `stripe_${session.id}`,
+    externalId: randomUUID().replace(/-/g, ""),
     imageUrl,
     variantId,
     productTypeId,

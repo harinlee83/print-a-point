@@ -1,0 +1,173 @@
+{
+  "id": "evt_1T8pm5IJxZMTsTge0wiDLZ1S",
+  "object": "event",
+  "api_version": "2026-02-25.clover",
+  "created": 1773008773,
+  "data": {
+    "object": {
+      "id": "cs_test_a1YmiTUzhfGkrsupfdarMYDTQZI4G3ClhuEEbIM4wAJvumi2NvHFJeAtjy",
+      "object": "checkout.session",
+      "adaptive_pricing": {
+        "enabled": true
+      },
+      "after_expiration": null,
+      "allow_promotion_codes": null,
+      "amount_subtotal": 9499,
+      "amount_total": 9499,
+      "automatic_tax": {
+        "enabled": false,
+        "liability": null,
+        "provider": null,
+        "status": null
+      },
+      "billing_address_collection": null,
+      "branding_settings": {
+        "background_color": "#ffffff",
+        "border_style": "rounded",
+        "button_color": "#0074d4",
+        "display_name": "PrintAPoint sandbox",
+        "font_family": "default",
+        "icon": null,
+        "logo": null
+      },
+      "cancel_url": "https://printapoint.com/create",
+      "client_reference_id": null,
+      "client_secret": null,
+      "collected_information": {
+        "business_name": null,
+        "individual_name": null,
+        "shipping_details": {
+          "address": {
+            "city": "Brookline",
+            "country": "US",
+            "line1": "39 Dwight Street",
+            "line2": "Apt. 3",
+            "postal_code": "02446",
+            "state": "MA"
+          },
+          "name": "Harin"
+        }
+      },
+      "consent": null,
+      "consent_collection": null,
+      "created": 1773008762,
+      "currency": "usd",
+      "currency_conversion": null,
+      "custom_fields": [],
+      "custom_text": {
+        "after_submit": null,
+        "shipping_address": null,
+        "submit": null,
+        "terms_of_service_acceptance": null
+      },
+      "customer": "cus_U73tR0EEM8Jckc",
+      "customer_account": null,
+      "customer_creation": "always",
+      "customer_details": {
+        "address": {
+          "city": "Brookline",
+          "country": "US",
+          "line1": "39 Dwight Street",
+          "line2": "Apt. 3",
+          "postal_code": "02446",
+          "state": "MA"
+        },
+        "business_name": null,
+        "email": "harinlee83@gmail.com",
+        "individual_name": null,
+        "name": "Harin",
+        "phone": "+17745516775",
+        "tax_exempt": "none",
+        "tax_ids": []
+      },
+      "customer_email": null,
+      "discounts": [],
+      "expires_at": 1773095162,
+      "invoice": null,
+      "invoice_creation": {
+        "enabled": false,
+        "invoice_data": {
+          "account_tax_ids": null,
+          "custom_fields": null,
+          "description": null,
+          "footer": null,
+          "issuer": null,
+          "metadata": {},
+          "rendering_options": null
+        }
+      },
+      "livemode": false,
+      "locale": null,
+      "metadata": {
+        "sizeLabel": "12 x 18 in",
+        "imageUrl": "https://pub-bf4d9986347d4db79fde084ed84a8e19.r2.dev/orders/ef2f926e-0362-4976-9157-ea8c39f2b2da.png",
+        "themeId": "midnight_blue",
+        "productTypeId": "framed-poster",
+        "displayCity": "Brookline",
+        "frameColor": "black",
+        "displayCountry": "United States",
+        "locationLabel": "Brookline, Norfolk County, Massachusetts, United States",
+        "orientation": "portrait",
+        "printfulVariantId": "4398"
+      },
+      "mode": "payment",
+      "origin_context": null,
+      "payment_intent": "pi_3T8pm2IJxZMTsTge1bdrE9fk",
+      "payment_link": null,
+      "payment_method_collection": "if_required",
+      "payment_method_configuration_details": {
+        "id": "pmc_1T8MuOIJxZMTsTgeFnUOVvwI",
+        "parent": null
+      },
+      "payment_method_options": {},
+      "payment_method_types": [
+        "card",
+        "klarna",
+        "link",
+        "affirm",
+        "cashapp",
+        "amazon_pay"
+      ],
+      "payment_status": "paid",
+      "permissions": null,
+      "phone_number_collection": {
+        "enabled": true
+      },
+      "recovered_from": null,
+      "saved_payment_method_options": {
+        "allow_redisplay_filters": [
+          "always"
+        ],
+        "payment_method_remove": "disabled",
+        "payment_method_save": null
+      },
+      "setup_intent": null,
+      "shipping_address_collection": {
+        "allowed_countries": [
+          "US"
+        ]
+      },
+      "shipping_cost": null,
+      "shipping_options": [],
+      "status": "complete",
+      "submit_type": null,
+      "subscription": null,
+      "success_url": "https://printapoint.com/success?session_id={CHECKOUT_SESSION_ID}",
+      "total_details": {
+        "amount_discount": 0,
+        "amount_shipping": 0,
+        "amount_tax": 0
+      },
+      "ui_mode": "hosted",
+      "url": null,
+      "wallet_options": null
+    }
+  },
+  "livemode": false,
+  "pending_webhooks": 1,
+  "request": {
+    "id": null,
+    "idempotency_key": null
+  },
+  "type": "checkout.session.completed"
+}
