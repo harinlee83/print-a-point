@@ -2,10 +2,6 @@
   <section class="preview-panel">
     <div ref="viewportRef" class="poster-viewport">
       <div
-        :class="productPreviewClasses"
-        :style="productPreviewStyle"
-      >
-      <div
         ref="frameRef"
         class="poster-frame"
         :class="{ 'is-landscape': store.aspectRatio > 1 }"
@@ -103,7 +99,6 @@
           Made with printapoint.com
         </p>
       </div>
-      </div>
     </div>
   </section>
 </template>
@@ -121,7 +116,6 @@ import { MAP_BUTTON_ZOOM_DURATION_MS, MAP_OVERZOOM_SCALE } from "~/lib/map/const
 import { ensureGoogleFont } from "~/lib/utils/fonts";
 import { resolveMapShape, getScaledCssClipPath } from "~/lib/shapes/mapShapes";
 import { snapToCenter } from "~/lib/utils/snap";
-import { getProductTypeById } from "~~/shared/productCatalog";
 
 const COUNTRY_VIEW_ZOOM_LEVEL = 10;
 const CONTINENT_VIEW_ZOOM_LEVEL = 6;
@@ -158,27 +152,6 @@ const posterBgColor = computed(() => {
     return store.shapeBackgroundColor;
   }
   return store.effectiveTheme.ui.bg;
-});
-
-const productPreviewClasses = computed(() => {
-  const type = store.selectedProductType;
-  return [
-    "product-preview",
-    `product-preview--${type}`,
-  ];
-});
-
-const productPreviewStyle = computed(() => {
-  const product = getProductTypeById(store.selectedProductType);
-  if (product.hasFrameOptions) {
-    const frameOption = product.frameOptions.find(
-      (f) => f.id === store.selectedFrameColor,
-    );
-    if (frameOption) {
-      return { "--frame-color": frameOption.colorHex } as Record<string, string>;
-    }
-  }
-  return {};
 });
 
 const isCityCountryView = computed(() => mapZoom.value >= COUNTRY_VIEW_ZOOM_LEVEL);

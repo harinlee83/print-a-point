@@ -3,7 +3,7 @@
     <h2>Product Format</h2>
     <div class="product-type-grid">
       <button
-        v-for="product in products"
+        v-for="product in visibleProducts"
         :key="product.id"
         type="button"
         :class="['product-type-card', { 'is-active': product.id === modelValue }]"
@@ -17,10 +17,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import type { ProductType, ProductTypeId } from "~~/shared/productCatalog";
 import { formatUsd, getStartingPrice } from "~~/shared/productCatalog";
 
-defineProps<{
+const props = defineProps<{
   products: ProductType[];
   modelValue: ProductTypeId;
 }>();
@@ -28,4 +29,8 @@ defineProps<{
 defineEmits<{
   "update:modelValue": [value: ProductTypeId];
 }>();
+
+const visibleProducts = computed(() => {
+  return props.products.filter(p => !p.id.includes("canvas"));
+});
 </script>

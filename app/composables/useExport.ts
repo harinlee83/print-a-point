@@ -290,6 +290,27 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     }
   };
 
+  const preparePrintPreview = async (): Promise<string> => {
+    try {
+      // 1. Export highest resolution PNG first (for R2 upload later)
+      const { blob: pngBlob } = await exportMapPng({ showWatermark: false });
+      store.setDesignPngBlob(pngBlob);
+
+      // 2. Export SVG (keeping as a separate blob for possible later use)
+      const { blob: svgBlob } = await exportMapSvg({ showWatermark: false });
+      store.setDesignSvgBlob(svgBlob);
+      
+      // 3. Use the PNG for the designUrl as it's the raw high-res source
+      const url = URL.createObjectURL(pngBlob);
+      store.setDesignUrl(url);
+      return url;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Design export failed.";
+      store.setError(msg);
+      throw err;
+    }
+  };
+
   return {
     exportMapPng,
     exportMapSvg,
@@ -297,5 +318,6 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
     downloadSvg,
     downloadAllPngs,
     downloadAllSvgs,
+    preparePrintPreview,
   };
 }

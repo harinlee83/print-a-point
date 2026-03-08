@@ -630,9 +630,15 @@
       />
 
       <div class="action-row">
-        <NuxtLink to="/print" class="generate-btn preview-print-link">
-          Preview Print Options →
-        </NuxtLink>
+        <button
+          type="button"
+          class="generate-btn preview-print-link"
+          :disabled="isPreparingPrint"
+          @click="$emit('preview-print')"
+        >
+          <span v-if="isPreparingPrint">Preparing Design...</span>
+          <span v-else>Preview Print Options →</span>
+        </button>
       </div>
 
       <div class="export-row export-row-top">
@@ -776,6 +782,7 @@ import type { SearchResult } from "~/lib/location/nominatim";
 
 defineProps<{
   shareCopied?: boolean;
+  isPreparingPrint?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -785,6 +792,7 @@ const emit = defineEmits<{
   "download-all-png": [];
   "download-all-svg": [];
   share: [];
+  "preview-print": [];
 }>();
 
 const store = useMapStore();

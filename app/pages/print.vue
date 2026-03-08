@@ -11,17 +11,7 @@
 
     <main class="print-page">
       <div class="print-preview-col">
-        <div class="print-preview-card" :style="previewAspectStyle">
-          <img
-            v-if="previewUrl"
-            :src="previewUrl"
-            alt="Your design"
-            class="print-preview-img"
-          />
-          <div v-else class="print-preview-placeholder">
-            <p>Generating preview…</p>
-          </div>
-        </div>
+        <ProductPlacementPreview />
         <p class="print-preview-note">
           The "Made with printapoint.com" watermark will be <strong>removed</strong> from the final print.
         </p>
@@ -41,7 +31,7 @@
 
         <SizeSelector
           v-model="sizeModel"
-          :sizes="store.availableSizes"
+          :sizes="rankedSizes"
         />
 
         <div class="action-row">
@@ -65,37 +55,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
-import type { Map as MapLibreMap } from "maplibre-gl";
+import { computed } from "vue";
 import SizeSelector from "~/components/SizeSelector.vue";
 import ProductTypeSelector from "~/components/ProductTypeSelector.vue";
 import FrameColorSelector from "~/components/FrameColorSelector.vue";
+import ProductPlacementPreview from "~/components/ProductPlacementPreview.vue";
 import { useMapStore } from "~/stores/map";
 import {
   formatUsd,
   PRODUCT_TYPES,
-  type ProductTypeId,
-  type FrameColorId,
+  getRecommendedVariants
+} from "~~/shared/productCatalog";
+import type {
+  ProductTypeId,
+  FrameColorId,
+  RankedVariant
 } from "~~/shared/productCatalog";
 
 const store = useMapStore();
-const previewUrl = ref<string | null>(null);
-
-// Generate a preview from the stored design on mount
-onMounted(async () => {
-  // The preview will be generated in the future when we wire up
-  // cross-page export. For now we rely on the store's state.
-});
-
-onUnmounted(() => {
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value);
-  }
-});
-
-const previewAspectStyle = computed(() => ({
-  aspectRatio: `${store.aspectRatio}`,
-}));
 
 const productTypeModel = computed<ProductTypeId>({
   get: () => store.selectedProductType,
@@ -107,10 +84,18 @@ const frameColorModel = computed<FrameColorId>({
   set: (value: FrameColorId) => store.setFrameColor(value),
 });
 
+const rankedSizes = computed(() => {
+  return getRecommendedVariants(
+    store.selectedProductType,
+    store.aspectRatio,
+    store.selectedFrameColor
+  );
+});
+
 const sizeModel = computed<string>({
-  get: () => store.selectedVariant?.sizeLabel ?? store.availableSizes[0]?.sizeLabel ?? "",
+  get: () => store.selectedVariant?.sizeLabel ?? rankedSizes.value[0]?.sizeLabel ?? "",
   set: (value: string) => {
-    const variant = store.availableSizes.find((v: any) => v.sizeLabel === value);
+    const variant = rankedSizes.value.find((v: RankedVariant) => v.sizeLabel === value);
     if (variant) {
       const sizeId = `${variant.widthInches}x${variant.heightInches}`;
       store.setSize(sizeId);
@@ -138,9 +123,30 @@ const startCheckout = async () => {
   store.setIsCheckoutLoading(true);
 
   try {
-    // For now, direct to Stripe checkout
-    // In the future this will upload to R2 and create a Stripe session
+    let finalImageUrl = store.designUrl;
+    
+    // If we have a local PNG blob, we must upload it to R2 before checkout
+    if (store.designPngBlob) {
+      const formData = new FormData();
+      formData.append("file", store.designPngBlob, "design.png");
+
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload high-resolution design image before checkout.");
+      }
+
+      const { url } = await uploadResponse.json();
+      store.setDesignUrl(url); // Also updates designUrl in store
+      store.setDesignPngBlob(null); // Clear blob so we don't upload again
+      finalImageUrl = url;
+    }
+
     const checkoutBody: Record<string, any> = {
+      imageUrl: finalImageUrl,
       productTypeId: store.selectedProductType,
       sizeLabel: store.selectedVariant?.sizeLabel ?? "",
       locationLabel: store.location,

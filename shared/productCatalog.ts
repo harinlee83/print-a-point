@@ -1,5 +1,5 @@
 export type ProductTypeId = "poster" | "framed-poster" | "canvas" | "framed-canvas";
-export type FrameColorId = "black" | "white" | "walnut";
+export type FrameColorId = "black" | "white" | "oak";
 
 export interface ProductVariant {
   sizeLabel: string;
@@ -11,6 +11,7 @@ export interface ProductVariant {
   targetHeightPx: number;
   defaultPriceCents: number;
   envVarKey: string;
+  printfulVariantId?: number;
 }
 
 export interface FrameOption {
@@ -33,7 +34,7 @@ export interface ProductType {
 const FRAME_OPTIONS: FrameOption[] = [
   { id: "black", label: "Black", colorHex: "#1a1a1a" },
   { id: "white", label: "White", colorHex: "#f5f5f0" },
-  { id: "walnut", label: "Walnut", colorHex: "#5c3a1e" },
+  { id: "oak", label: "Red Oak", colorHex: "#D4A489" },
 ];
 
 import { POSTER_SIZES, type PosterSize } from "./posterSizes";
@@ -41,7 +42,7 @@ import { POSTER_SIZES, type PosterSize } from "./posterSizes";
 function deriveEnvKey(type: string, size: PosterSize, color?: string): string {
   const sizePart = size.id.replace(".", "_");
   const typePart = type.split("-").map(p => p.charAt(0).toUpperCase() + p.slice(1)).join("");
-  const colorPart = color ? color.charAt(0).toUpperCase() + color.slice(1) : "";
+  const colorPart = color ? `_${color.charAt(0).toUpperCase() + color.slice(1)}` : "";
   return `printfulVariant${typePart}${sizePart}${colorPart}`;
 }
 
@@ -50,45 +51,70 @@ function posterVariants(): ProductVariant[] {
     ...s,
     sizeLabel: s.label,
     envVarKey: deriveEnvKey("poster", s),
+    printfulVariantId: s.printfulVariantId,
   }));
 }
 
 function framedPosterVariants(): ProductVariant[] {
   const variants: ProductVariant[] = [];
-  for (const s of POSTER_SIZES) {
-    for (const frame of FRAME_OPTIONS) {
+  FRAME_OPTIONS.forEach((color) => {
+    POSTER_SIZES.forEach((s) => {
+      // Approximate framed price (base + $30 for frame)
+      const framedPrice = s.defaultPriceCents + 3000;
       variants.push({
-        ...s,
         sizeLabel: s.label,
-        defaultPriceCents: s.defaultPriceCents + 4000,
-        envVarKey: deriveEnvKey("framed-poster", s, frame.id),
+        widthInches: s.widthInches,
+        heightInches: s.heightInches,
+        widthCm: s.widthCm,
+        heightCm: s.heightCm,
+        targetWidthPx: s.targetWidthPx,
+        targetHeightPx: s.targetHeightPx,
+        defaultPriceCents: framedPrice,
+        envVarKey: deriveEnvKey("framed-poster", s, color.id),
+        // Variant IDs for framed posters are complex, 
+        // normally we'd fetch these or have a full mapping.
       });
-    }
-  }
+    });
+  });
   return variants;
 }
 
 function canvasVariants(): ProductVariant[] {
   return POSTER_SIZES.map((s) => ({
-    ...s,
     sizeLabel: s.label,
-    defaultPriceCents: s.defaultPriceCents + 3000,
+    widthInches: s.widthInches,
+    heightInches: s.heightInches,
+    widthCm: s.widthCm,
+    heightCm: s.heightCm,
+    targetWidthPx: s.targetWidthPx,
+    targetHeightPx: s.targetHeightPx,
+    // Canvas price (base + $40)
+    defaultPriceCents: s.defaultPriceCents + 4000,
     envVarKey: deriveEnvKey("canvas", s),
+    // Map panoramic canvases specifically as they are confirmed in products.json
+    printfulVariantId: s.id === "12x36" ? 19301 : s.id === "16x48" ? 19305 : s.id === "20x60" ? 19313 : undefined,
   }));
 }
 
 function framedCanvasVariants(): ProductVariant[] {
   const variants: ProductVariant[] = [];
-  for (const s of POSTER_SIZES) {
-    for (const frame of FRAME_OPTIONS) {
+  FRAME_OPTIONS.forEach((color) => {
+    POSTER_SIZES.forEach((s) => {
+      // Framed canvas price (base + $60)
+      const framedCanvasPrice = s.defaultPriceCents + 6000;
       variants.push({
-        ...s,
         sizeLabel: s.label,
-        defaultPriceCents: s.defaultPriceCents + 7000,
-        envVarKey: deriveEnvKey("framed-canvas", s, frame.id),
+        widthInches: s.widthInches,
+        heightInches: s.heightInches,
+        widthCm: s.widthCm,
+        heightCm: s.heightCm,
+        targetWidthPx: s.targetWidthPx,
+        targetHeightPx: s.targetHeightPx,
+        defaultPriceCents: framedCanvasPrice,
+        envVarKey: deriveEnvKey("framed-canvas", s, color.id),
       });
-    }
-  }
+    });
+  });
   return variants;
 }
 
@@ -152,7 +178,8 @@ export function getAvailableSizes(
     return product.variants;
   }
   const color = frameColorId ?? product.frameOptions[0]?.id ?? "black";
-  return product.variants.filter((v) => v.envVarKey.endsWith(`_${color}`));
+  const colorSuffix = color.charAt(0).toUpperCase() + color.slice(1);
+  return product.variants.filter((v) => v.envVarKey.endsWith(`_${colorSuffix}`));
 }
 
 export function getVariantEnvKey(
@@ -163,7 +190,8 @@ export function getVariantEnvKey(
   const product = getProductTypeById(productTypeId);
   let variants = product.variants;
   if (product.hasFrameOptions && frameColorId) {
-    variants = variants.filter((v) => v.envVarKey.endsWith(`_${frameColorId}`));
+    const colorSuffix = frameColorId.charAt(0).toUpperCase() + frameColorId.slice(1);
+    variants = variants.filter((v) => v.envVarKey.endsWith(`_${colorSuffix}`));
   }
   const variant = variants.find((v) => v.sizeLabel === sizeLabel);
   return variant?.envVarKey ?? null;
@@ -181,4 +209,46 @@ export function formatUsd(cents: number): string {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(cents / 100);
+}
+
+export type VariantMatchLevel = "best" | "near" | "mismatch";
+
+export interface RankedVariant extends ProductVariant {
+  matchLevel: VariantMatchLevel;
+  ratioDifference: number;
+}
+
+/**
+ * Ranks variants based on how well they match the targeted design aspect ratio.
+ */
+export function getRecommendedVariants(
+  productTypeId: ProductTypeId,
+  designRatio: number, // width / height
+  frameColorId?: FrameColorId,
+): RankedVariant[] {
+  const allVariants = getAvailableSizes(productTypeId, frameColorId);
+
+  return allVariants
+    .map((v) => {
+      const variantRatio = v.widthInches / v.heightInches;
+      const diff = Math.abs(variantRatio - designRatio);
+
+      let matchLevel: VariantMatchLevel = "mismatch";
+      if (diff < 0.01) matchLevel = "best";
+      else if (diff < 0.15) matchLevel = "near";
+
+      return {
+        ...v,
+        matchLevel,
+        ratioDifference: diff,
+      };
+    })
+    .sort((a, b) => {
+      // Sort by match level first, then by ratio difference
+      const score = { best: 0, near: 1, mismatch: 2 };
+      if (score[a.matchLevel] !== score[b.matchLevel]) {
+        return score[a.matchLevel] - score[b.matchLevel];
+      }
+      return a.ratioDifference - b.ratioDifference;
+    });
 }

@@ -44,7 +44,8 @@ defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
   position: relative;
@@ -55,18 +56,18 @@ defineEmits<{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 3rem 2rem;
   text-align: center;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--accent-primary);
+  border: 3px solid rgba(232, 223, 208, 0.1);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 @keyframes spin {
@@ -74,17 +75,17 @@ defineEmits<{
 }
 
 .progress-bar-container {
-  width: 200px;
+  width: min(240px, 80%);
   height: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--line);
   border-radius: 2px;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   overflow: hidden;
 }
 
 .progress-bar {
   height: 100%;
-  background: var(--accent-primary);
+  background: var(--accent);
   transition: width 0.3s ease;
 }
 
@@ -92,19 +93,23 @@ defineEmits<{
   width: 100%;
   height: 100%;
   object-fit: contain;
+  display: block;
 }
 
 .retry-btn {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background: var(--accent-primary);
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
   border: none;
-  border-radius: 6px;
-  color: white;
+  border-radius: 8px;
+  color: var(--accent-ink);
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .retry-btn:hover {
-  filter: brightness(1.1);
+  background: var(--accent-strong);
+  transform: translateY(-1px);
 }
 </style>

@@ -39,6 +39,9 @@ export const useMapStore = defineStore("map", {
     latitude: DEFAULT_LAT,
     longitude: DEFAULT_LON,
     distance: 2_000,
+    designUrl: "",
+    designPngBlob: null as Blob | null,
+    designSvgBlob: null as Blob | null,
 
     displayCity: "Hanover",
     displayCountry: "Germany",
@@ -47,8 +50,8 @@ export const useMapStore = defineStore("map", {
     selectedThemeId: defaultThemeName,
     customColors: {} as Record<string, string>,
 
-    selectedProductType: "poster" as ProductTypeId,
-    selectedFrameColor: "black" as FrameColorId,
+    selectedProductType: "framed-poster" as ProductTypeId,
+    selectedFrameColor: "oak" as FrameColorId,
     selectedSizeId: DEFAULT_POSTER_SIZE_ID,
     selectedAspectRatioId: DEFAULT_ASPECT_RATIO_ID,
     selectedOrientation: "portrait" as "portrait" | "landscape",
@@ -229,6 +232,23 @@ export const useMapStore = defineStore("map", {
 
     clearError() {
       this.error = "";
+    },
+
+    setDesignUrl(url: string) {
+      // Create local blob URLs when passing a local object url
+      // If we already had a local object URL, we should revoke it to avoid memory leaks
+      if (this.designUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(this.designUrl);
+      }
+      this.designUrl = url;
+    },
+
+    setDesignPngBlob(blob: Blob | null) {
+      this.designPngBlob = blob;
+    },
+
+    setDesignSvgBlob(blob: Blob | null) {
+      this.designSvgBlob = blob;
     },
 
     setTheme(themeId: string) {

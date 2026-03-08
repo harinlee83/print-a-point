@@ -12,12 +12,14 @@
     <main class="app-main">
       <CustomizerPanel
         :share-copied="shareCopied"
+        :is-preparing-print="isPreparingPrint"
         @location-selected="handleLocationSelected"
         @download-png="handleDownloadPng"
         @download-svg="handleDownloadSvg"
         @download-all-png="handleDownloadAllPng"
         @download-all-svg="handleDownloadAllSvg"
         @share="handleShare"
+        @preview-print="handlePreviewPrint"
       >
         <PosterPreview
           ref="previewRef"
@@ -41,11 +43,12 @@ import { themeNames } from "~/lib/theme/themeRepository";
 
 const store = useMapStore();
 const route = useRoute();
+const router = useRouter();
 const { copyShareUrl, applyFromUrl } = useShareConfig();
 const previewRef = ref<InstanceType<typeof PosterPreview> | null>(null);
 const mapRef = ref<MapLibreMap | null>(null);
 
-const { exportMapPng, downloadPng, downloadSvg, downloadAllPngs, downloadAllSvgs } = useExport(mapRef);
+const { exportMapPng, downloadPng, downloadSvg, downloadAllPngs, downloadAllSvgs, preparePrintPreview } = useExport(mapRef);
 
 const onMapReady = (map: MapLibreMap) => {
   mapRef.value = map;
@@ -83,6 +86,20 @@ const handleShare = async () => {
     }, 2000);
   } else {
     store.setError("Could not copy link. Please try again.");
+  }
+};
+
+const isPreparingPrint = ref(false);
+
+const handlePreviewPrint = async () => {
+  isPreparingPrint.value = true;
+  try {
+    await preparePrintPreview();
+    router.push("/print");
+  } catch (err) {
+    // Error is already handled/shown by store
+  } finally {
+    isPreparingPrint.value = false;
   }
 };
 
