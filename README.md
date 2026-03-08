@@ -11,17 +11,24 @@ Nuxt 4 app for designing premium custom map posters client-side, then purchasing
 - Fully client-side editor UI (Nuxt + Vue + Pinia)
 - Editor moved to `/create`
 - Live MapLibre poster preview with:
-  - Location search (Nominatim)
-  - Manual lat/lon + distance controls
+  - Location search (Nominatim) — fixed to prioritize English results
+  - Manual lat/lon + distance controls (default distance: 2000)
   - Terraink theme set (including additional themes)
   - Per-layer color overrides
   - Typography controls
+  - Orientation Selector (Portrait / Landscape)
   - Editable map mode (pan/zoom/rotation)
+- Expanded Product Catalog:
+  - Enhanced Matte Paper Posters
+  - Framed Posters (Black, White, Walnut)
+  - Stretched Canvases
+  - Framed Canvases (Black, White, Walnut)
 - High-resolution export before checkout (PNG at print dimensions)
 - Server routes for commerce + fulfillment:
   - `POST /api/upload` (Cloudflare R2)
-  - `POST /api/checkout` (Stripe Checkout Session)
+  - `POST /api/checkout` (Stripe Checkout Session with full variant support)
   - `POST /api/webhook` (Stripe webhook -> Printful order)
+  - `POST /api/mockup` + polling (Printful Mockup Generator)
   - `GET /api/stripe-session` (success page)
   - `GET /api/catalog` and `GET /api/shipping-countries`
 - Success page (`/success`)

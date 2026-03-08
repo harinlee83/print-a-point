@@ -136,6 +136,7 @@ export interface CreatePrintfulOrderInput {
     countryCode: string;
     phone?: string;
   };
+  productTypeId?: string;
 }
 
 export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
@@ -178,6 +179,16 @@ export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
             {
               type: "default",
               url: input.imageUrl,
+              // If it's a canvas, we want to scale it up slightly to ensure 
+              // it covers the wrap area (bleed) completely.
+              ...(input.productTypeId?.includes("canvas") && {
+                position: {
+                  width: 1.1, // Scale up to 110%
+                  height: 1.1,
+                  top: -0.05, // Offset to keep it centered
+                  left: -0.05
+                }
+              })
             },
           ],
         },

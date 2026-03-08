@@ -13,11 +13,15 @@ export default defineEventHandler(async (event) => {
     imageUrl?: string;
     productId?: number;
     variantIds?: number[];
+    width?: number;
+    height?: number;
   }>(event);
 
   const imageUrl = String(body.imageUrl ?? "").trim();
   const productId = body.productId;
   const variantIds = body.variantIds ?? [];
+  const variantWidth = body.width || 1000;
+  const variantHeight = body.height || 1000;
 
   if (!imageUrl || !/^https?:\/\//i.test(imageUrl)) {
     throw createError({

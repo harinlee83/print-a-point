@@ -40,11 +40,11 @@ const woodTextures = shallowRef<{
 let animationId = 0;
 let isDragging = false;
 let prevMouse = { x: 0, y: 0 };
-let targetRotY = -0.15;
-let targetRotX = 0.1;
-let currentRotY = -0.15;
-let currentRotX = 0.1;
-let targetZoom = 9.5;
+let targetRotY = -0.35;
+let targetRotX = 0.25;
+let currentRotY = -0.35;
+let currentRotX = 0.25;
+let targetZoom = 8.8;
 
 const imageUrl = computed(() => store.designUrl);
 const spec = computed(() => getPrintSpec(store.selectedProductType));
@@ -619,7 +619,7 @@ function initScene() {
   r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   r.setSize(w, h);
   r.toneMapping = THREE.ACESFilmicToneMapping;
-  r.toneMappingExposure = 1.0;
+  r.toneMappingExposure = 1.35;
   
   // Enable shadows
   r.shadowMap.enabled = true;
@@ -634,14 +634,14 @@ function initScene() {
 
   // Camera
   const cam = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
-  cam.position.z = 9.5;
+  cam.position.z = 8.8;
   camera.value = cam;
 
   // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.85);
   s.add(ambient);
 
-  const key = new THREE.DirectionalLight(0xffffff, 1.2);
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
   key.position.set(5, 6, 8);
   key.castShadow = true;
   key.shadow.mapSize.width = 2048;
@@ -655,7 +655,7 @@ function initScene() {
   key.shadow.bias = -0.0005;
   s.add(key);
 
-  const fill = new THREE.DirectionalLight(0xaaccff, 0.4);
+  const fill = new THREE.DirectionalLight(0xaaccff, 0.7);
   fill.position.set(-4, 2, 4);
   s.add(fill);
 }

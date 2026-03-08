@@ -175,12 +175,12 @@ The webhook (`server/api/webhook.post.ts`) requires no changes — it reads `pri
 
 ### Mockup Generation
 
-Two endpoints for on-demand Printful mockup generation:
+Two endpoints for on-demand Printful mockup generation (Currently Implemented):
 
 - `POST /api/mockup` — create a mockup task. Body: `{ imageUrl, productId, variantIds }`. Returns `{ taskKey }`.
 - `GET /api/mockup-status?task_key=...` — poll task status. Returns `{ status, mockups, error }`.
 
-Rate limited by Printful (10 requests/min for established stores).
+Rate limited by Printful (10 requests/min for established stores). Frontend must implement polling for the final image.
 
 ### Pinia Store (`app/stores/map.ts`)
 

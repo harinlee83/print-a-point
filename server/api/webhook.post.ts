@@ -58,6 +58,7 @@ export default defineEventHandler(async (event) => {
   const metadata = session.metadata ?? {};
   const imageUrl = assertString(metadata.imageUrl, "metadata.imageUrl");
   const variantId = Number(assertString(metadata.printfulVariantId, "metadata.printfulVariantId"));
+  const productTypeId = String(metadata.productTypeId || "poster");
 
   if (!Number.isFinite(variantId) || variantId <= 0) {
     throw createError({
@@ -89,6 +90,7 @@ export default defineEventHandler(async (event) => {
     externalId: `stripe_${session.id}`,
     imageUrl,
     variantId,
+    productTypeId,
     quantity: 1,
     email: customerEmail,
     recipient: {

@@ -1,0 +1,12 @@
+- generate high fidelity static mockups using nano banana.
+- show examples of different maps when users scroll down
+- show examples of different pins when users scroll down
+- show examples of different text styles when users scroll down
+- show high fidelity mock ups
+- create google workspace email
+- sign up for facebook ads
+- sign up instagram
+- sign up for X
+- create printful and stripe accounts
+- hook up stripe
+- hook up printful

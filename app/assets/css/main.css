@@ -2682,10 +2682,10 @@ button.ghost {
   max-width: 1400px;
   margin: 0 auto;
   padding: 1rem 1rem 2rem;
-  height: 100vh;
+  height: calc(100vh - 60px); /* Account for header */
   min-height: 0;
   align-items: start;
-  overflow-y: hidden;
+  overflow: hidden;
 }
 
 .print-preview-col {
@@ -2739,7 +2739,12 @@ button.ghost {
   flex-direction: column;
   gap: 2rem;
   min-width: 0;
+  height: 100%;
+  overflow-y: auto;
   padding-bottom: 2rem;
+  padding-right: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
 }
 
 .preview-print-link {

@@ -84,11 +84,12 @@ print-a-point/
 
 The following are considered complete based on existing frontend code found in terraink. YOU WILL NEED TRANSLATE THE REACT CODE OVER TO VUE CODE FOR THE NUXT FRAMEWORK. Document them here for completeness and QA reference.
 
-- **Location search** — Geocoding by place name or raw lat/lng coordinates
-- **Themes** — At minimum: Neon Cyberpunk, Minimal Light, Minimal Dark, Watercolor, Blueprint
+- **Location search** — Geocoding by place name or raw lat/lng coordinates (localized to English)
+- **Themes** — Neon Cyberpunk, Minimal Light, Minimal Dark, Watercolor, Blueprint, and more.
 - **Color customization** — Per-layer color overrides (roads, water, parks, buildings, background)
-- **Typography** — City name (large), country name (medium), coordinates (small); font family and weight selection
-- **Layout** — Portrait and landscape orientations; A4, 18×24", 24×36" presets
+- **Typography** — City name (large), country name (medium), coordinates (small); font family selection
+- **Orientation** — Toggle between **Vertical (Portrait)** and **Horizontal (Landscape)**
+- **Product Formats** — Posters, Framed Posters, Stretched Canvases, and Framed Canvases
 - **Live preview** — Poster frame mockup updates in real time as user customizes
 - **PNG export** — High-resolution export function (see Section 6 for resolution requirements)
 
