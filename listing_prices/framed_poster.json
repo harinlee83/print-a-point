@@ -1,0 +1,54 @@
+[
+  {
+    "size": "8x10",
+    "listingPrice": "64.99"
+  },
+  {
+    "size": "10x10",
+    "listingPrice": "69.99"
+  },
+  {
+    "size": "11x14",
+    "listingPrice": "84.99"
+  },
+  {
+    "size": "12x12",
+    "listingPrice": "79.99"
+  },
+  {
+    "size": "12x16",
+    "listingPrice": "89.99"
+  },
+  {
+    "size": "12x18",
+    "listingPrice": "94.99"
+  },
+  {
+    "size": "14x14",
+    "listingPrice": "99.99"
+  },
+  {
+    "size": "16x16",
+    "listingPrice": "109.99"
+  },
+  {
+    "size": "16x20",
+    "listingPrice": "119.99"
+  },
+  {
+    "size": "18x18",
+    "listingPrice": "124.99"
+  },
+  {
+    "size": "18x24",
+    "listingPrice": "134.99"
+  },
+  {
+    "size": "20x30",
+    "listingPrice": "149.99"
+  },
+  {
+    "size": "24x36",
+    "listingPrice": "199.99"
+  }
+]
