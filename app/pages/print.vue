@@ -141,24 +141,26 @@ const startCheckout = async () => {
   try {
     let finalImageUrl = store.designUrl;
     
-    // If we have a local PNG blob, we must upload it to R2 before checkout
+    // If we have a local PNG blob, upload directly to R2 via presigned URL
     if (store.designPngBlob) {
-      const formData = new FormData();
-      formData.append("file", store.designPngBlob, "design.png");
+      const { uploadUrl, publicFileUrl } = await $fetch<{
+        uploadUrl: string;
+        publicFileUrl: string;
+      }>("/api/upload-url", { method: "POST" });
 
-      const uploadResponse = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      const putResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "image/png" },
+        body: store.designPngBlob,
       });
 
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload high-resolution design image before checkout.");
+      if (!putResponse.ok) {
+        throw new Error("Failed to upload high-resolution design image.");
       }
 
-      const { url } = await uploadResponse.json();
-      store.setDesignUrl(url); // Also updates designUrl in store
-      store.setDesignPngBlob(null); // Clear blob so we don't upload again
-      finalImageUrl = url;
+      store.setDesignUrl(publicFileUrl);
+      store.setDesignPngBlob(null);
+      finalImageUrl = publicFileUrl;
     }
 
     const checkoutBody: Record<string, any> = {

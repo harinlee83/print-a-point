@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 let client: S3Client | null = null;
 
@@ -59,4 +60,25 @@ export async function uploadPngToR2(buffer: Buffer) {
   );
 
   return `${publicUrl.replace(/\/$/, "")}/${key}`;
+}
+
+export async function createPresignedUploadUrl() {
+  const config = useRuntimeConfig();
+  const bucketName = process.env.NUXT_R2_BUCKET_NAME || config.r2BucketName;
+  const publicUrl = process.env.NUXT_R2_PUBLIC_URL || config.r2PublicUrl;
+  const r2 = getR2Client();
+
+  const key = `orders/${randomUUID()}.png`;
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    ContentType: "image/png",
+    CacheControl: "public, max-age=2592000, immutable",
+  });
+
+  const uploadUrl = await getSignedUrl(r2, command, { expiresIn: 300 });
+  const publicFileUrl = `${publicUrl.replace(/\/$/, "")}/${key}`;
+
+  return { uploadUrl, publicFileUrl };
 }
