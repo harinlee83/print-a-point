@@ -1,15 +1,27 @@
 <template>
   <div class="success-shell">
     <section class="success-card">
+      <div class="success-icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="24" fill="var(--accent)" />
+          <path d="M14 24.5L21 31.5L34 18.5" stroke="var(--accent-ink)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+
       <h1>Order Confirmed</h1>
-      <p v-if="loading">Loading your order details...</p>
+
+      <div v-if="loading" class="success-loading">Loading order details...</div>
+
       <template v-else>
-        <p v-if="customerEmail">
-          A confirmation email was sent to <strong>{{ customerEmail }}</strong>.
-        </p>
-        <p>
-          Your poster is now in the print queue. Typical delivery is 3-5 business days for production, plus shipping.
-        </p>
+        <div class="success-details">
+          <p v-if="customerEmail">
+            A confirmation email was sent to <strong>{{ customerEmail }}</strong>.
+          </p>
+          <p>
+            Your print is now in the production queue. Typical delivery is 3-5 business days for production, plus shipping.
+          </p>
+        </div>
+
       </template>
 
       <NuxtLink class="generate-btn" to="/create">Design Another</NuxtLink>

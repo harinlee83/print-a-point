@@ -1569,23 +1569,42 @@ button.ghost {
 }
 
 .success-card {
-  width: min(560px, 94vw);
+  width: min(480px, 92vw);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
-  padding: 1.25rem;
+  padding: 2rem 1.75rem;
   display: grid;
-  gap: 0.7rem;
+  gap: 1rem;
+  text-align: center;
+}
+
+.success-icon {
+  display: flex;
+  justify-content: center;
 }
 
 .success-card h1 {
   margin: 0;
+  font-size: 1.5rem;
 }
 
-.success-card p {
+.success-loading {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.success-details {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.success-details p {
   margin: 0;
   color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
 }
 
 @media (max-width: 1060px) {

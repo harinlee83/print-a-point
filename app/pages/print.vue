@@ -121,7 +121,7 @@ const sizeModel = computed<string>({
 
 const buyButtonLabel = computed(() => {
   if (store.isCheckoutLoading) {
-    return "Preparing checkout…";
+    return "Redirecting to Stripe…";
   }
   const variant = store.selectedVariant;
   if (variant) {
