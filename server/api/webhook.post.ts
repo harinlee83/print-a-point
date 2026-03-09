@@ -123,9 +123,14 @@ export default defineEventHandler(async (event) => {
 
       // If the order already exists with this external ID, it means we already processed this webhook.
       // We can just return success to Stripe so it stops retrying.
-      if (printfulErrorMsg.includes("already exists") || printfulErrorMsg.includes("external_id already exists")) {
+      const isDuplicate =
+        printfulErrorMsg.includes("already exists") ||
+        printfulErrorMsg.includes("external_id already exists") ||
+        printfulErrorMsg.includes("already used");
+
+      if (isDuplicate) {
         console.log(`[webhook] Printful order for session ${session.id} already exists. Attempting fallback confirmation...`);
-        
+
         try {
           const hashedId = createHash("md5").update(session.id).digest("hex");
           const orderId = await getPrintfulOrderIdByExternalId(hashedId);
