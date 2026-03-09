@@ -50,14 +50,15 @@
 
         <div class="print-options-fixed">
           <div class="action-row">
+            <div class="maintenance-notice">
+              <p>Purchasing through Printful is undergoing maintenance. Please try again in a few days.</p>
+            </div>
             <button
               type="button"
-              :class="['generate-btn', { 'is-loading': store.isCheckoutLoading }]"
-              :disabled="!userHasChosenSize || store.isCheckoutLoading"
-              @click="startCheckout"
+              class="generate-btn is-disabled"
+              disabled
             >
-              <div v-if="store.isCheckoutLoading" class="loading-spinner"></div>
-              <span>{{ buyButtonLabel }}</span>
+              <span>Maintenance in Progress</span>
             </button>
             <p class="subtle-note">
               Checkout and fulfillment are securely powered by Stripe and Printful.
@@ -254,5 +255,29 @@ const startCheckout = async () => {
 
 .product-features li {
   margin-bottom: 0.4rem;
+}
+
+.maintenance-notice {
+  background: rgba(255, 100, 100, 0.1);
+  border: 1px solid rgba(255, 100, 100, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.maintenance-notice p {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.generate-btn.is-disabled {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 </style>
