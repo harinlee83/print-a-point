@@ -1,4 +1,4 @@
-import { confirmPrintfulOrder } from "~~/server/utils/printful";
+import { confirmPrintfulOrder, getPrintfulOrder } from "~~/server/utils/printful";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -15,22 +15,29 @@ export default defineEventHandler(async (event) => {
     // We only care about orders in 'draft' status where costs are now calculated.
     // Printful "order.updated" fires when costs are ready.
     if (orderId && status === "draft") {
-      // Check if costs are present (suggests calculation is done)
-      const hasCosts = !!(order.costs?.subtotal || order.retail_costs?.subtotal);
+      try {
+        const fullOrder = await getPrintfulOrder(orderId);
 
-      if (hasCosts) {
-        console.log(`[printful-webhook] Order ${orderId} (Ext: ${externalId}) is ready for confirmation.`);
-        try {
-          await confirmPrintfulOrder(orderId);
-          return { handled: true, action: "confirmed" };
-        } catch (err: any) {
-          console.error(`[printful-webhook] Failed to confirm order ${orderId}:`, err?.message);
-          // Return 200 anyway so Printful doesn't keep retrying if it's a permanent error
-          // or handle it as you prefer.
-          return { handled: true, error: err?.message };
+        const isCalculationDone =
+          fullOrder?.costs?.calculation_status === "done" ||
+          fullOrder?.retail_costs?.calculation_status === "done";
+
+        if (isCalculationDone) {
+          console.log(`[printful-webhook] Order ${orderId} (Ext: ${externalId}) costs calculated. Ready for confirmation.`);
+          try {
+            await confirmPrintfulOrder(orderId);
+            return { handled: true, action: "confirmed" };
+          } catch (err: any) {
+            console.error(`[printful-webhook] Failed to confirm order ${orderId}:`, err?.message);
+            // Return 200 anyway so Printful doesn't keep retrying if it's a permanent error
+            return { handled: true, error: err?.message };
+          }
+        } else {
+          console.log(`[printful-webhook] Order ${orderId} updated but costs calculation_status is not 'done' yet.`);
         }
-      } else {
-        console.log(`[printful-webhook] Order ${orderId} updated but costs not ready yet.`);
+      } catch (err: any) {
+        console.error(`[printful-webhook] Failed to fetch full order ${orderId}:`, err?.message);
+        return { handled: true, error: "Order fetch failed" };
       }
     }
   }

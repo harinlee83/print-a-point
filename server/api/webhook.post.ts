@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import Stripe from "stripe";
-import { createPrintfulOrder, confirmPrintfulOrder, getPrintfulOrderIdByExternalId } from "~~/server/utils/printful";
+import { createPrintfulOrder, confirmPrintfulOrder, getPrintfulOrderIdByExternalId, getPrintfulOrder } from "~~/server/utils/printful";
 import { getStripeClient } from "~~/server/utils/stripe";
 
 function assertString(value: unknown, fieldName: string): string {
@@ -135,8 +135,17 @@ export default defineEventHandler(async (event) => {
           const hashedId = createHash("md5").update(session.id).digest("hex");
           const orderId = await getPrintfulOrderIdByExternalId(hashedId);
           if (orderId) {
-            await confirmPrintfulOrder(orderId);
-            console.log(`[webhook] Fallback confirmation successful for order ${orderId}`);
+            const fullOrder = await getPrintfulOrder(orderId);
+            const isCalculationDone =
+              fullOrder?.costs?.calculation_status === "done" ||
+              fullOrder?.retail_costs?.calculation_status === "done";
+
+            if (isCalculationDone) {
+              await confirmPrintfulOrder(orderId);
+              console.log(`[webhook] Fallback confirmation successful for order ${orderId}`);
+            } else {
+              console.log(`[webhook] Order ${orderId} already exists but costs are not calculated yet. Waiting for Printful webhook.`);
+            }
           }
         } catch (confirmErr) {
           console.error("[webhook] Fallback confirmation failed:", confirmErr);

@@ -232,6 +232,33 @@ export async function getPrintfulOrderIdByExternalId(externalId: string): Promis
   }
 }
 
+export async function getPrintfulOrder(orderId: number): Promise<any> {
+  const config = useRuntimeConfig();
+  const printfulApiKey = process.env.NUXT_PRINTFUL_API_KEY || config.printfulApiKey;
+
+  if (!printfulApiKey) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Missing Printful API configuration",
+    });
+  }
+
+  try {
+    const response = await $fetch<{ data: any }>(
+      `${PRINTFUL_API_BASE}/v2/orders/${orderId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${printfulApiKey}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (err) {
+    console.error(`[printful] Failed to fetch order ${orderId}:`, err);
+    return null;
+  }
+}
+
 export async function confirmPrintfulOrder(orderId: number) {
   const config = useRuntimeConfig();
   const printfulApiKey =
