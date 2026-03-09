@@ -216,7 +216,7 @@ export async function getPrintfulOrderIdByExternalId(externalId: string): Promis
   if (!printfulApiKey) return null;
 
   try {
-    const response = await $fetch<{ result: Array<{ id: number }> }>(
+    const response = await $fetch<{ data: Array<{ id: number }> }>(
       `${PRINTFUL_API_BASE}/v2/orders?external_id=${externalId}`,
       {
         headers: {
@@ -224,8 +224,8 @@ export async function getPrintfulOrderIdByExternalId(externalId: string): Promis
         },
       }
     );
-    // API v2 returns result as the main wrapper for lists usually
-    return response.result?.[0]?.id ?? null;
+    // API v2 uses `data` array
+    return response.data?.[0]?.id ?? null;
   } catch (err) {
     console.error(`[printful] Failed to lookup order by externalId ${externalId}:`, err);
     return null;
