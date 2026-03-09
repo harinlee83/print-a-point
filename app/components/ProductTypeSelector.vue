@@ -10,7 +10,6 @@
         @click="$emit('update:modelValue', product.id)"
       >
         <p class="product-type-label">{{ product.shortLabel }}</p>
-        <p class="product-type-price">from {{ formatUsd(getStartingPrice(product.id)) }}</p>
       </button>
     </div>
   </section>

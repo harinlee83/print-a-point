@@ -52,11 +52,12 @@
           <div class="action-row">
             <button
               type="button"
-              class="generate-btn"
+              :class="['generate-btn', { 'is-loading': store.isCheckoutLoading }]"
               :disabled="!userHasChosenSize || store.isCheckoutLoading"
               @click="startCheckout"
             >
-              {{ buyButtonLabel }}
+              <div v-if="store.isCheckoutLoading" class="loading-spinner"></div>
+              <span>{{ buyButtonLabel }}</span>
             </button>
             <p class="subtle-note">
               Checkout and fulfillment are securely powered by Stripe and Printful.
