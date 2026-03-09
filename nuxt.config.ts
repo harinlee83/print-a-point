@@ -17,6 +17,20 @@ export default defineNuxtConfig({
           content: "Turn Coordinates into Art. Create custom map posters from any location.",
         },
       ],
+      script: [
+        {
+          src: "https://www.googletagmanager.com/gtag/js?id=G-JT3DFDK8FV",
+          async: true,
+        },
+        {
+          innerHTML: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-JT3DFDK8FV');
+          `,
+        },
+      ],
     },
   },
 
