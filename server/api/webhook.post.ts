@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import Stripe from "stripe";
 import { createPrintfulOrder } from "~~/server/utils/printful";
 import { getStripeClient } from "~~/server/utils/stripe";
@@ -88,7 +89,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const orderData = {
-    externalId: session.id, // Use Stripe session ID for strict idempotency
+    // Printful v2 has a 32-character limit for external_id. 
+    // MD5 hash of session.id is exactly 32 hex characters.
+    externalId: createHash("md5").update(session.id).digest("hex"),
     imageUrl,
     variantId,
     productTypeId,
