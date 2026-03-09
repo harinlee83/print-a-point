@@ -2716,6 +2716,8 @@ button.ghost {
   padding-top: 1rem;
   padding-bottom: 2rem;
   overflow: hidden;
+  background: #3d3832;
+  border-radius: 12px;
 }
 
 .print-preview-card {

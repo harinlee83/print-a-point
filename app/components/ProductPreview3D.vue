@@ -848,7 +848,7 @@ watch(imageUrl, async (url) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface, #1a1816);
+  background: #3d3832;
   z-index: 2;
 }
 

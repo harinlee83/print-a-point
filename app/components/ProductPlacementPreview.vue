@@ -13,10 +13,6 @@
 
       <!-- Info bar -->
       <div class="placement-info">
-        <span class="placement-info-size">{{ currentSizeLabel }}</span>
-        <span v-if="showWrap" class="placement-info-wrap">
-          {{ spec.wrapInches }}" gallery wrap
-        </span>
         <span class="placement-info-hint">drag to rotate • scroll to zoom</span>
       </div>
     </template>
@@ -26,16 +22,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useMapStore } from "~/stores/map";
-import { getPrintSpec } from "~~/shared/printSpecs";
 import ProductPreview3D from "~/components/ProductPreview3D.vue";
 
 const store = useMapStore();
 
 const imageUrl = computed(() => store.designUrl);
-const spec = computed(() => getPrintSpec(store.selectedProductType));
-const variant = computed(() => store.selectedVariant);
-const showWrap = computed(() => spec.value.hasWrap);
-const currentSizeLabel = computed(() => variant.value?.sizeLabel ?? "");
 </script>
 
 <style scoped>
@@ -81,13 +72,6 @@ const currentSizeLabel = computed(() => variant.value?.sizeLabel ?? "");
   padding: 0.5rem 1rem;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.placement-info-wrap {
-  padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  font-size: 0.75rem;
 }
 
 .placement-info-hint {

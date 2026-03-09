@@ -299,7 +299,7 @@ export function useExport(mapRef: Ref<MapLibreMap | null>) {
       // 2. Export SVG (keeping as a separate blob for possible later use)
       const { blob: svgBlob } = await exportMapSvg({ showWatermark: false });
       store.setDesignSvgBlob(svgBlob);
-      
+
       // 3. Use the PNG for the designUrl as it's the raw high-res source
       const url = URL.createObjectURL(pngBlob);
       store.setDesignUrl(url);

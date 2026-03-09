@@ -53,7 +53,7 @@
             <button
               type="button"
               class="generate-btn"
-              :disabled="store.isCheckoutLoading"
+              :disabled="!userHasChosenSize || store.isCheckoutLoading"
               @click="startCheckout"
             >
               {{ buyButtonLabel }}
@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import SizeSelector from "~/components/SizeSelector.vue";
 import ProductTypeSelector from "~/components/ProductTypeSelector.vue";
 import FrameColorSelector from "~/components/FrameColorSelector.vue";
@@ -108,11 +108,17 @@ const rankedSizes = computed(() => {
   );
 });
 
+const userHasChosenSize = ref(false);
+
 const sizeModel = computed<string>({
-  get: () => store.selectedVariant?.sizeLabel ?? rankedSizes.value[0]?.sizeLabel ?? "",
+  get: () => {
+    if (!userHasChosenSize.value) return "";
+    return store.selectedVariant?.sizeLabel ?? rankedSizes.value[0]?.sizeLabel ?? "";
+  },
   set: (value: string) => {
     const variant = rankedSizes.value.find((v: RankedVariant) => v.sizeLabel === value);
     if (variant) {
+      userHasChosenSize.value = true;
       const sizeId = `${variant.widthInches}x${variant.heightInches}`;
       store.setSize(sizeId);
     }
@@ -120,6 +126,9 @@ const sizeModel = computed<string>({
 });
 
 const buyButtonLabel = computed(() => {
+  if (!userHasChosenSize.value) {
+    return "Choose a Size";
+  }
   if (store.isCheckoutLoading) {
     return "Redirecting to Stripe…";
   }
@@ -131,7 +140,7 @@ const buyButtonLabel = computed(() => {
 });
 
 const startCheckout = async () => {
-  if (store.isCheckoutLoading) {
+  if (!userHasChosenSize.value || store.isCheckoutLoading) {
     return;
   }
 
@@ -140,8 +149,8 @@ const startCheckout = async () => {
 
   try {
     let finalImageUrl = store.designUrl;
-    
-    // If we have a local PNG blob, upload directly to R2 via presigned URL
+
+    // Upload to R2 at checkout time
     if (store.designPngBlob) {
       const { uploadUrl, publicFileUrl } = await $fetch<{
         uploadUrl: string;
