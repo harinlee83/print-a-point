@@ -1953,6 +1953,13 @@ button.ghost {
   width: max-content;
   height: 100%;
   animation: home-poster-scroll 60s linear infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  /* Force GPU layer */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
 }
 
 .home-carousel-track--reverse {
@@ -1968,10 +1975,12 @@ button.ghost {
   position: relative;
   flex: 0 0 auto;
   background: var(--surface);
-  transform: scale(1);
+  transform: translate3d(0, 0, 0);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
   color: inherit;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .home-carousel-card:hover {
@@ -2038,21 +2047,21 @@ button.ghost {
 
 @keyframes home-poster-scroll {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   to {
-    transform: translateX(-33.333%);
+    transform: translate3d(-33.3333%, 0, 0);
   }
 }
 
 @keyframes home-poster-scroll-reverse {
   from {
-    transform: translateX(-33.333%);
+    transform: translate3d(-33.3333%, 0, 0);
   }
 
   to {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
