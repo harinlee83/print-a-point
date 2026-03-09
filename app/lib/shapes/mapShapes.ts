@@ -102,7 +102,7 @@ export const MAP_SHAPES: MapShape[] = [
       // heart-icon.svg viewBox 0 0 122.88 107.41 — preserve aspect ratio
       const ar = 122.88 / 107.41;
       const hw = w * 0.84;
-      const hh = Math.min(hw / ar, h * 0.60);
+      const hh = h * 0.60;
       const finalW = hh * ar;
       const ox = (w - finalW) / 2;
       const oy = h * 0.10;
@@ -215,8 +215,7 @@ export function getScaledCanvasClipPath(
   if (shapeId === "heart") {
     const ar = 122.88 / 107.41;
     const sizeFactor = 0.6 * scale;
-    const hw = w * 0.84;
-    const hh = Math.min(hw / ar, h * sizeFactor);
+    const hh = h * sizeFactor;
     const finalW = hh * ar;
     const ox = (w - finalW) / 2;
     const oy = h * 0.10;
@@ -291,8 +290,7 @@ export function getScaledCssClipPath(
   if (shapeId === "heart") {
     const ar = 122.88 / 107.41;
     const sizeFactor = 0.6 * scale;
-    const hw = fw * 0.84;
-    const hh = Math.min(hw / ar, fh * sizeFactor);
+    const hh = fh * sizeFactor;
     const finalW = hh * ar;
     const ox = (fw - finalW) / 2;
     const oy = fh * 0.10;

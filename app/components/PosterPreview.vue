@@ -147,6 +147,7 @@ const {
 
 const activeShape = computed(() => resolveMapShape(store.mapShape));
 const isNoneShape = computed(() => store.mapShape === "none");
+const effectiveShapeScale = computed(() => store.mapShapeScale ?? 1);
 const posterBgColor = computed(() => {
   if (!isNoneShape.value && store.shapeBackgroundColor) {
     return store.shapeBackgroundColor;

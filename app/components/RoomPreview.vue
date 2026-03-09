@@ -1,9 +1,9 @@
 <template>
-  <div ref="containerRef" class="preview3d-container">
-    <div v-if="!imageLoaded" class="preview3d-loading">
-      <div class="preview3d-spinner" />
+  <div ref="containerRef" class="room3d-container">
+    <div v-if="!imageLoaded" class="room3d-loading">
+      <div class="room3d-spinner" />
     </div>
-    <canvas ref="canvasRef" class="preview3d-canvas" />
+    <canvas ref="canvasRef" class="room3d-canvas" />
   </div>
 </template>
 
@@ -21,6 +21,8 @@ import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader";
 import { useMapStore } from "~/stores/map";
 import { getPrintSpec, getWrapPercent } from "~~/shared/printSpecs";
 import { getProductTypeById } from "~~/shared/productCatalog";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 const store = useMapStore();
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -30,6 +32,7 @@ const imageLoaded = ref(false);
 const renderer = shallowRef<THREE.WebGLRenderer | null>(null);
 const scene = shallowRef<THREE.Scene | null>(null);
 const camera = shallowRef<THREE.PerspectiveCamera | null>(null);
+const roomGroup = shallowRef<THREE.Group | null>(null);
 const productGroup = shallowRef<THREE.Group | null>(null);
 const texture = shallowRef<THREE.Texture | null>(null);
 const woodTextures = shallowRef<{
@@ -37,14 +40,9 @@ const woodTextures = shallowRef<{
   normalMap: THREE.Texture;
   roughnessMap: THREE.Texture;
 } | null>(null);
+
 let animationId = 0;
-let isDragging = false;
-let prevMouse = { x: 0, y: 0 };
-let targetRotY = -0.35;
-let targetRotX = 0.25;
-let currentRotY = -0.35;
-let currentRotX = 0.25;
-let targetZoom = 8.8;
+let controls: OrbitControls | null = null;
 
 const imageUrl = computed(() => store.designUrl);
 const spec = computed(() => getPrintSpec(store.selectedProductType));
@@ -75,14 +73,11 @@ function loadTexture(url: string): Promise<THREE.Texture> {
       url,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
-        
-        // Improve texture resolution at oblique angles
         if (renderer.value) {
           tex.anisotropy = renderer.value.capabilities.getMaxAnisotropy();
         }
         tex.generateMipmaps = true;
         tex.minFilter = THREE.LinearMipMapLinearFilter;
-        
         resolve(tex);
       },
       undefined,
@@ -113,40 +108,46 @@ async function loadPlywoodTextures() {
       loadEXR("/textures/frame/plywood_rough_4k.exr"),
     ]);
 
-    // Cleanup old if exists
     if (woodTextures.value) {
       woodTextures.value.map.dispose();
       woodTextures.value.normalMap.dispose();
       woodTextures.value.roughnessMap.dispose();
     }
 
-    // Configure tiling
     [map, normalMap, roughnessMap].forEach((t) => {
       t.wrapS = THREE.RepeatWrapping;
       t.wrapT = THREE.RepeatWrapping;
-      t.repeat.set(1, 1); // We'll adjust this per frame piece
+      t.repeat.set(1, 1); 
     });
 
     woodTextures.value = { map, normalMap, roughnessMap };
   } catch (err) {
-    console.error("Failed to load plywood textures:", err);
+    console.warn("Could not load plywood textures, will use procedural fallback.");
   }
 }
 
 function getAspect(): { w: number; h: number } {
-  const ratio = store.aspectRatio; // width / height
-  if (ratio >= 1) {
-    return { w: 3, h: 3 / ratio };
-  }
-  return { w: 3 * ratio, h: 3 };
+  // We want the print size to be roughly realistic relative to the room.
+  // We'll scale it down by a factor to match Three.js units (1 unit ~ 1 foot roughly, or 10 inches).
+  // E.g., a 24x36 poster -> 2.4 x 3.6 units
+  const inchesW = store.selectedOrientation === "landscape" ? variant.value?.heightInches : variant.value?.widthInches;
+  const inchesH = store.selectedOrientation === "landscape" ? variant.value?.widthInches : variant.value?.heightInches;
+  
+  const width = inchesW ? inchesW / 12 : 1.5;
+  const height = inchesH ? inchesH / 12 : 2.0;
+  
+  return { w: width, h: height };
 }
 
-function buildProduct() {
-  if (!scene.value || !texture.value) return;
+// ------------------------------------------------------------------
+// PRODUCT BUILDING (Adapted from ProductPreview3D)
+// ------------------------------------------------------------------
 
-  // Remove old group
+function buildProduct() {
+  if (!scene.value || !texture.value || !roomGroup.value) return;
+
   if (productGroup.value) {
-    scene.value.remove(productGroup.value);
+    roomGroup.value.remove(productGroup.value);
     productGroup.value.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.geometry.dispose();
@@ -173,8 +174,85 @@ function buildProduct() {
     buildPoster(group, w, h);
   }
 
-  scene.value.add(group);
+  // Position product flush against the new procedural back wall
+  // Wall is at z = -6. We place the artwork slightly in front of it to prevent z-fighting
+  group.position.set(0, 5, -5.9);
+  
+  roomGroup.value.add(group);
   productGroup.value = group;
+}
+
+function generateWoodTexture(baseColorHex: string): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024; // Higher resolution for better grain detail
+  canvas.height = 1024;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+
+  // 1. Fill base color (warm oak)
+  ctx.fillStyle = baseColorHex;
+  ctx.fillRect(0, 0, 1024, 1024);
+
+  // 2. Add subtle overall color noise for natural variation
+  for (let i = 0; i < 50; i++) {
+    ctx.fillStyle = i % 2 === 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)";
+    ctx.fillRect(Math.random() * 1024, Math.random() * 1024, 200, 200);
+  }
+
+  // 3. Growth Rings (Main Grain) - Wavy dark lines
+  ctx.strokeStyle = "rgba(60, 30, 10, 0.25)";
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 150; i++) {
+    let y = Math.random() * 1024;
+    let waviness = 5 + Math.random() * 10;
+    let frequency = 0.005 + Math.random() * 0.01;
+    
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    for (let x = 0; x <= 1024; x += 20) {
+      const dy = Math.sin(x * frequency) * waviness + (Math.random() - 0.5) * 2;
+      ctx.lineTo(x, y + dy);
+    }
+    ctx.stroke();
+  }
+
+  // 4. Fine Fibers - Very thin, high-frequency lines
+  ctx.strokeStyle = "rgba(40, 20, 5, 0.15)";
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < 400; i++) {
+    let y = Math.random() * 1024;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(1024, y + (Math.random() - 0.5) * 5);
+    ctx.stroke();
+  }
+
+  // 5. Pores - Tiny dark elongated specks typical of oak
+  ctx.fillStyle = "rgba(30, 15, 5, 0.35)";
+  for (let i = 0; i < 2000; i++) {
+    const x = Math.random() * 1024;
+    const y = Math.random() * 1024;
+    const w = 1 + Math.random() * 2;
+    const h = 0.5 + Math.random();
+    ctx.fillRect(x, y, w, h);
+  }
+
+  // 6. Light Flecks (Medullary Rays) - Subtle light streaks
+  ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+  for (let i = 0; i < 40; i++) {
+    const x = Math.random() * 1024;
+    const y = Math.random() * 1024;
+    ctx.fillRect(x, y, 40, 2);
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  // Repeat to make the grain appear denser along the frame edges
+  // Since we use 1024x1024 now, we might need to adjust repeat
+  tex.repeat.set(1, 2); 
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 
 function buildPoster(group: THREE.Group, w: number, h: number) {
@@ -236,6 +314,7 @@ function buildFramedPoster(group: THREE.Group, w: number, h: number) {
     frameParams.map = wt.map;
     frameParams.normalMap = wt.normalMap;
     frameParams.roughnessMap = wt.roughnessMap;
+    // @ts-ignore
     frameParams.normalScale = new THREE.Vector2(1, 1);
     frameParams.roughness = 1.0;
     frameParams.metalness = 0.0;
@@ -304,23 +383,6 @@ function buildFramedPoster(group: THREE.Group, w: number, h: number) {
   right.castShadow = true;
   right.receiveShadow = true;
   group.add(right);
-
-  /* 
-  // Glass (Realistic transmission) - REMOVED for clarity as it makes the poster look blurry
-  const glassGeo = new THREE.PlaneGeometry(w, h);
-  const glassMat = new THREE.MeshPhysicalMaterial({
-    roughness: 0.05,
-    transmission: 0.95, // Glass-like transparency
-    thickness: 0.02,
-    ior: 1.5,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.1,
-    color: 0xffffff,
-  });
-  const glass = new THREE.Mesh(glassGeo, glassMat);
-  glass.position.z = frameDepth * 0.4;
-  group.add(glass);
-  */
 }
 
 function buildCanvas(
@@ -458,6 +520,7 @@ function buildCanvas(
       frameParams.map = wt.map;
       frameParams.normalMap = wt.normalMap;
       frameParams.roughnessMap = wt.roughnessMap;
+      // @ts-ignore
       frameParams.normalScale = new THREE.Vector2(1, 1);
       frameParams.roughness = 1.0;
       frameParams.metalness = 0.0;
@@ -511,96 +574,84 @@ function buildCanvas(
   }
 }
 
-function addWallShadow(
-  group: THREE.Group,
-  w: number,
-  h: number,
-  offset: number,
-) {
-  const shadowGeo = new THREE.PlaneGeometry(w + 0.4, h + 0.4);
-  const shadowMat = new THREE.MeshBasicMaterial({
-    color: 0x000000,
-    transparent: true,
-    opacity: 0.18,
-  });
-  const shadow = new THREE.Mesh(shadowGeo, shadowMat);
-  shadow.position.z = -offset;
-  shadow.position.x = 0.05;
-  shadow.position.y = -0.08;
-  group.add(shadow);
+// ------------------------------------------------------------------
+// SCENE & INTERACTION
+// ------------------------------------------------------------------
+
+function setupLighting(s: THREE.Scene) {
+  // Ambient Skylight (soft Scandinavian lighting)
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0xe0e5ec, 0.7);
+  hemiLight.position.set(0, 20, 0);
+  s.add(hemiLight);
+
+  // Soft directional warm light (simulates a window to the right)
+  const dirLight = new THREE.DirectionalLight(0xfff5e6, 1.1);
+  dirLight.position.set(10, 15, 10);
+  dirLight.castShadow = true;
+  dirLight.shadow.camera.top = 15;
+  dirLight.shadow.camera.bottom = -15;
+  dirLight.shadow.camera.left = -15;
+  dirLight.shadow.camera.right = 15;
+  dirLight.shadow.camera.near = 0.1;
+  dirLight.shadow.camera.far = 40;
+  dirLight.shadow.mapSize.width = 2048;
+  dirLight.shadow.mapSize.height = 2048;
+  dirLight.shadow.bias = -0.0005;
+  s.add(dirLight);
+
+  // Subtle interior fill light from the opposite side
+  const fillLight = new THREE.DirectionalLight(0xaaccff, 0.5);
+  fillLight.position.set(-15, 10, -10);
+  s.add(fillLight);
 }
 
-function generateWoodTexture(baseColorHex: string): THREE.CanvasTexture {
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024; // Higher resolution for better grain detail
-  canvas.height = 1024;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return new THREE.CanvasTexture(canvas);
+function buildRoom(group: THREE.Group) {
+  // Materials that evoke a Scandinavian loft
+  const floorMat = new THREE.MeshStandardMaterial({ 
+    color: 0xeae6df, // Light, natural oak color
+    roughness: 0.8,
+    metalness: 0.05
+  });
 
-  // 1. Fill base color (warm oak)
-  ctx.fillStyle = baseColorHex;
-  ctx.fillRect(0, 0, 1024, 1024);
+  const wallMat = new THREE.MeshStandardMaterial({ 
+    color: 0xfaf9f6, // Very soft eggshell white
+    roughness: 0.95,
+  });
 
-  // 2. Add subtle overall color noise for natural variation
-  for (let i = 0; i < 50; i++) {
-    ctx.fillStyle = i % 2 === 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)";
-    ctx.fillRect(Math.random() * 1024, Math.random() * 1024, 200, 200);
-  }
+  const accentMat = new THREE.MeshStandardMaterial({
+    color: 0x8c969c, // Soft slate blue-grey accent wall
+    roughness: 0.95,
+  });
 
-  // 3. Growth Rings (Main Grain) - Wavy dark lines
-  ctx.strokeStyle = "rgba(60, 30, 10, 0.25)";
-  ctx.lineWidth = 1.5;
-  for (let i = 0; i < 150; i++) {
-    let y = Math.random() * 1024;
-    let waviness = 5 + Math.random() * 10;
-    let frequency = 0.005 + Math.random() * 0.01;
-    
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    for (let x = 0; x <= 1024; x += 20) {
-      const dy = Math.sin(x * frequency) * waviness + (Math.random() - 0.5) * 2;
-      ctx.lineTo(x, y + dy);
-    }
-    ctx.stroke();
-  }
+  const woodMat = new THREE.MeshStandardMaterial({
+    color: 0xd4c4b7, // Birch wood
+    roughness: 0.7,
+  });
 
-  // 4. Fine Fibers - Very thin, high-frequency lines
-  ctx.strokeStyle = "rgba(40, 20, 5, 0.15)";
-  ctx.lineWidth = 0.5;
-  for (let i = 0; i < 400; i++) {
-    let y = Math.random() * 1024;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(1024, y + (Math.random() - 0.5) * 5);
-    ctx.stroke();
-  }
+  // Floor
+  const floorGeo = new THREE.PlaneGeometry(30, 30);
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  group.add(floor);
 
-  // 5. Pores - Tiny dark elongated specks typical of oak
-  ctx.fillStyle = "rgba(30, 15, 5, 0.35)";
-  for (let i = 0; i < 2000; i++) {
-    const x = Math.random() * 1024;
-    const y = Math.random() * 1024;
-    const w = 1 + Math.random() * 2;
-    const h = 0.5 + Math.random();
-    ctx.fillRect(x, y, w, h);
-  }
+  // Back Wall (Accent)
+  const backWallGeo = new THREE.BoxGeometry(30, 20, 1);
+  const backWall = new THREE.Mesh(backWallGeo, accentMat);
+  backWall.position.set(0, 10, -6.5);
+  backWall.receiveShadow = true;
+  group.add(backWall);
 
-  // 6. Light Flecks (Medullary Rays) - Subtle light streaks
-  ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
-  for (let i = 0; i < 40; i++) {
-    const x = Math.random() * 1024;
-    const y = Math.random() * 1024;
-    ctx.fillRect(x, y, 40, 2);
-  }
+  // Left Wall Removed to prevent camera obstruction 
 
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = THREE.RepeatWrapping;
-  tex.wrapT = THREE.RepeatWrapping;
-  // Repeat to make the grain appear denser along the frame edges
-  // Since we use 1024x1024 now, we might need to adjust repeat
-  tex.repeat.set(1, 2); 
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
+  // Soft Rug on Floor
+  const rugGeo = new THREE.PlaneGeometry(16, 12);
+  const rugMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1.0 });
+  const rug = new THREE.Mesh(rugGeo, rugMat);
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.set(0, 0.02, 2);
+  rug.receiveShadow = true;
+  group.add(rug);
 }
 
 function initScene() {
@@ -611,99 +662,64 @@ function initScene() {
   const w = container.clientWidth;
   const h = container.clientHeight;
 
-  // Renderer
   const r = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
-    alpha: true,
+    alpha: true
   });
   r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   r.setSize(w, h);
-  r.toneMapping = THREE.ACESFilmicToneMapping;
-  r.toneMappingExposure = 1.35;
-  
-  // Enable shadows
+  r.outputColorSpace = THREE.SRGBColorSpace; 
   r.shadowMap.enabled = true;
   r.shadowMap.type = THREE.PCFSoftShadowMap;
 
   renderer.value = r;
 
-  // Scene
   const s = new THREE.Scene();
-  // s.background = new THREE.Color(0xECE6D9); // REMOVED: User does not want the tan background
+  s.background = new THREE.Color(0xdce3e6); // Soft sky color
   scene.value = s;
 
-  // Camera
+  // Camera positioned cleanly to view the scandinavian layout
   const cam = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
-  cam.position.z = 8.8;
+  cam.position.set(0, 6, 20);
   camera.value = cam;
 
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.85);
-  s.add(ambient);
+  const mainGroup = new THREE.Group();
+  s.add(mainGroup);
+  roomGroup.value = mainGroup;
 
-  const key = new THREE.DirectionalLight(0xffffff, 1.4);
-  key.position.set(5, 6, 8);
-  key.castShadow = true;
-  key.shadow.mapSize.width = 2048;
-  key.shadow.mapSize.height = 2048;
-  key.shadow.camera.near = 0.5;
-  key.shadow.camera.far = 25;
-  key.shadow.camera.left = -5;
-  key.shadow.camera.right = 5;
-  key.shadow.camera.top = 5;
-  key.shadow.camera.bottom = -5;
-  key.shadow.bias = -0.0005;
-  s.add(key);
+  setupLighting(s);
+  buildRoom(mainGroup);
 
-  const fill = new THREE.DirectionalLight(0xaaccff, 0.7);
-  fill.position.set(-4, 2, 4);
-  s.add(fill);
+  // Controls
+  const ctrl = new OrbitControls(cam, canvas);
+  ctrl.enableDamping = true;
+  ctrl.enableZoom = true;
+  ctrl.enablePan = false;
+  // Limit distance so we don't zoom out of the room completely or clip into walls
+  ctrl.minDistance = 6;
+  ctrl.maxDistance = 25;
+  // Keep camera above floor level
+  ctrl.minPolarAngle = Math.PI / 4;
+  ctrl.maxPolarAngle = Math.PI / 2.1;
+  // Restrict horizontal turning so the user primarily looks at the back wall / poster
+  ctrl.minAzimuthAngle = -Math.PI / 3;
+  ctrl.maxAzimuthAngle = Math.PI / 3;
+  // Target the artwork area
+  ctrl.target.set(0, 5, -5.9);
+  controls = ctrl;
 }
 
 function animate() {
   animationId = requestAnimationFrame(animate);
 
-  // Smooth rotation
-  currentRotY += (targetRotY - currentRotY) * 0.08;
-  currentRotX += (targetRotX - currentRotX) * 0.08;
-
-  if (productGroup.value) {
-    productGroup.value.rotation.y = currentRotY;
-    productGroup.value.rotation.x = currentRotX;
+  if (controls) {
+    controls.update();
   }
 
   if (renderer.value && scene.value && camera.value) {
-    // Smooth zoom
-    camera.value.position.z += (targetZoom - camera.value.position.z) * 0.1;
     renderer.value.render(scene.value, camera.value);
   }
-}
-
-function onWheel(e: WheelEvent) {
-  e.preventDefault();
-  targetZoom += e.deltaY * 0.01;
-  targetZoom = Math.max(3.0, Math.min(10.0, targetZoom));
-}
-
-function onPointerDown(e: PointerEvent) {
-  isDragging = true;
-  prevMouse = { x: e.clientX, y: e.clientY };
-}
-
-function onPointerMove(e: PointerEvent) {
-  if (!isDragging) return;
-  const dx = e.clientX - prevMouse.x;
-  const dy = e.clientY - prevMouse.y;
-  targetRotY += dx * 0.005;
-  targetRotX += dy * 0.005;
-  targetRotX = Math.max(-0.5, Math.min(0.5, targetRotX));
-  targetRotY = Math.max(-0.8, Math.min(0.8, targetRotY));
-  prevMouse = { x: e.clientX, y: e.clientY };
-}
-
-function onPointerUp() {
-  isDragging = false;
 }
 
 function handleResize() {
@@ -724,20 +740,106 @@ onMounted(async () => {
   initScene();
   animate();
 
-  const canvas = canvasRef.value;
-  if (canvas) {
-    canvas.addEventListener("pointerdown", onPointerDown);
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", onPointerUp);
-  }
-
   if (containerRef.value) {
     resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(containerRef.value);
   }
 
-  const loadTasks: Promise<any>[] = [loadPlywoodTextures()];
+  const loadTasks: Promise<any>[] = [
+    loadPlywoodTextures(),
+    new Promise<void>((resolve) => {
+      new GLTFLoader().load(
+        "/CouchMedium.glb",
+        (gltf) => {
+          const model = gltf.scene;
+          
+          // Position under the poster on the floor
+          // Back wall is around z = -6.5, poster at -5.9.
+          // Adjust z so couch sits comfortably against the wall, but not clipping.
+          model.position.set(0, 0, -4.2);
+          model.scale.set(1.4, 1.4, 1.4);
+          
+          // Ensure it can cast and receive lighting properly
+          model.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mesh = child as THREE.Mesh;
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+            }
+          });
+          
+          if (roomGroup.value) {
+            roomGroup.value.add(model);
+          }
+          resolve();
+        },
+        undefined,
+        (err) => {
+          console.error("Failed to load couch:", err);
+          resolve(); // Resolve anyway so it doesn't block the promise all!
+        }
+      );
+    }),
+    new Promise<void>((resolve) => {
+      new GLTFLoader().load(
+        "/house_plant.glb",
+        (gltf) => {
+          const model = gltf.scene;
+          // Position right of the couch
+          model.position.set(5.5, 0, -4.2);
+          model.scale.set(0.55, 0.55, 0.55);
+          
+          model.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mesh = child as THREE.Mesh;
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+            }
+          });
+          
+          if (roomGroup.value) {
+            roomGroup.value.add(model);
+          }
+          resolve();
+        },
+        undefined,
+        (err) => {
+          console.error("Failed to load house plant:", err);
+          resolve();
+        }
+      );
+    }),
+    new Promise<void>((resolve) => {
+      new GLTFLoader().load(
+        "/retro_wood_coffee_table.glb",
+        (gltf) => {
+          const model = gltf.scene;
+          // Position in front of the couch
+          model.position.set(0, 0, 0.75);
+          model.scale.set(7.5, 7.5, 7.5);
+          model.rotation.y = Math.PI / 3.1; // Rotate further
+          
+          model.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mesh = child as THREE.Mesh;
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+            }
+          });
+          
+          if (roomGroup.value) {
+            roomGroup.value.add(model);
+          }
+          resolve();
+        },
+        undefined,
+        (err) => {
+          console.error("Failed to load coffee table:", err);
+          resolve();
+        }
+      );
+    })
+  ];
 
   if (imageUrl.value) {
     loadTasks.push(
@@ -745,9 +847,7 @@ onMounted(async () => {
         .then((tex) => {
           texture.value = tex;
         })
-        .catch(() => {
-          // Texture load failed
-        })
+        .catch(() => {})
     );
   }
 
@@ -763,13 +863,9 @@ onMounted(async () => {
 onUnmounted(() => {
   cancelAnimationFrame(animationId);
 
-  const canvas = canvasRef.value;
-  if (canvas) {
-    canvas.removeEventListener("pointerdown", onPointerDown);
-    canvas.removeEventListener("wheel", onWheel);
+  if (controls) {
+    controls.dispose();
   }
-  window.removeEventListener("pointermove", onPointerMove);
-  window.removeEventListener("pointerup", onPointerUp);
 
   if (resizeObserver) {
     resizeObserver.disconnect();
@@ -794,81 +890,66 @@ onUnmounted(() => {
   }
 });
 
-// Rebuild when product config changes
 watch(
   [
     () => store.selectedProductType,
     () => store.selectedFrameColor,
-    () => store.selectedVariant,
-    () => store.aspectRatio,
+    () => variant.value?.sizeLabel,
+    () => store.selectedOrientation,
   ],
   () => {
-    if (texture.value) buildProduct();
+    if (texture.value) {
+      buildProduct();
+    }
   },
 );
-
-// Reload texture if design URL changes
-watch(imageUrl, async (url) => {
-  if (!url) return;
-  imageLoaded.value = false;
-  try {
-    texture.value?.dispose();
-    texture.value = await loadTexture(url);
-    imageLoaded.value = true;
-    buildProduct();
-  } catch {
-    // ignore
-  }
-});
 </script>
 
 <style scoped>
-.preview3d-container {
+.room3d-container {
   width: 100%;
   height: 100%;
   flex: 1;
   min-width: 0;
-  min-height: 50vh;
   position: relative;
+  background: #383b50;
   overflow: hidden;
   display: flex;
-  cursor: grab;
-  user-select: none;
 }
 
-.preview3d-container:active {
-  cursor: grabbing;
-}
-
-.preview3d-canvas {
+.room3d-canvas {
   width: 100% !important;
   height: 100% !important;
   flex: 1;
   display: block;
+  cursor: grab;
+  touch-action: none;
 }
 
-.preview3d-loading {
+.room3d-canvas:active {
+  cursor: grabbing;
+}
+
+.room3d-loading {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #3d3832;
-  z-index: 2;
+  background: #383b50;
+  z-index: 10;
 }
 
-.preview3d-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid rgba(232, 223, 208, 0.1);
-  border-top-color: var(--accent, #c8a96e);
+.room3d-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--accent);
   border-radius: 50%;
-  animation: preview3d-spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
-@keyframes preview3d-spin {
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import SizeSelector from "~/components/SizeSelector.vue";
 import ProductTypeSelector from "~/components/ProductTypeSelector.vue";
 import FrameColorSelector from "~/components/FrameColorSelector.vue";
@@ -137,6 +137,30 @@ const buyButtonLabel = computed(() => {
     return `Buy Print — ${formatUsd(variant.defaultPriceCents)}`;
   }
   return "Buy Print";
+});
+
+function autoSelectLargestSize() {
+  if (rankedSizes.value && rankedSizes.value.length > 0) {
+    const largest = rankedSizes.value[rankedSizes.value.length - 1];
+    if (largest) {
+      userHasChosenSize.value = true;
+      const sizeId = `${largest.widthInches}x${largest.heightInches}`;
+      store.setSize(sizeId);
+    }
+  }
+}
+
+onMounted(() => {
+  if (!userHasChosenSize.value) {
+    autoSelectLargestSize();
+  }
+});
+
+watch(rankedSizes, (newSizes, oldSizes) => {
+  // If the available sizes change (e.g. product format changed), auto select the largest available
+  if (newSizes && newSizes.length > 0) {
+    autoSelectLargestSize();
+  }
 });
 
 const startCheckout = async () => {

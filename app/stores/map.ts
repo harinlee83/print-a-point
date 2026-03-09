@@ -269,15 +269,16 @@ export const useMapStore = defineStore("map", {
     setProductType(id: ProductTypeId) {
       if (!PRODUCT_TYPE_IDS.includes(id)) return;
       this.selectedProductType = id;
-      // Reset size to first available for this product type
+      // Reset size to most expensive available for this product type
       const sizes = getAvailableSizes(id, this.selectedFrameColor);
-      const firstSize = sizes[0];
-      if (firstSize) {
-        const sizeId = firstSize.sizeLabel.replace(/\s/g, "").replace("x", "x").replace("in", "");
-        // Try to match a PosterSizeId
-        const match = firstSize;
-        if (match) {
-          const posterSizeId = `${match.widthInches}x${match.heightInches}`;
+
+      if (sizes.length > 0) {
+        // Sort sizes by price descending
+        const sortedSizes = [...sizes].sort((a, b) => b.defaultPriceCents - a.defaultPriceCents);
+        const bestSize = sortedSizes[0];
+
+        if (bestSize) {
+          const posterSizeId = `${bestSize.widthInches}x${bestSize.heightInches}`;
           this.selectedSizeId = posterSizeId as any;
         }
       }
@@ -287,10 +288,14 @@ export const useMapStore = defineStore("map", {
       if (!ASPECT_RATIO_IDS.includes(id)) return;
       this.selectedAspectRatioId = id;
 
-      // Sync size to first available for this ratio
+      // Sync size to largest available for this ratio
       const ratio = getAspectRatioById(id);
       if (ratio && ratio.sizes.length > 0) {
-        const size = ratio.sizes[0];
+        // Sort sizes by longest dimension descending to pick the largest
+        const sortedSizes = [...ratio.sizes].sort((a, b) =>
+          Math.max(b.widthInches, b.heightInches) - Math.max(a.widthInches, a.heightInches)
+        );
+        const size = sortedSizes[0];
         if (size) {
           this.selectedSizeId = `${size.widthInches}x${size.heightInches}` as any;
         }
