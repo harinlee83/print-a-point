@@ -158,7 +158,6 @@ export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
   }
 
   const orientation = mapOrientation(input.orientation);
-  const shouldConfirm = process.env.NUXT_PRINTFUL_CONFIRM_ORDERS === "true";
 
   const orderResponse = await $fetch<{ data?: { id?: number } }>(
     `${PRINTFUL_API_BASE}/v2/orders`,
@@ -205,9 +204,24 @@ export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
     },
   );
 
-  if (shouldConfirm && orderResponse?.data?.id) {
+  return orderResponse;
+}
+
+export async function confirmPrintfulOrder(orderId: number) {
+  const config = useRuntimeConfig();
+  const printfulApiKey =
+    process.env.NUXT_PRINTFUL_API_KEY || config.printfulApiKey;
+
+  if (!printfulApiKey) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Missing Printful API configuration",
+    });
+  }
+
+  try {
     await $fetch(
-      `${PRINTFUL_API_BASE}/v2/orders/${orderResponse.data.id}/confirmation`,
+      `${PRINTFUL_API_BASE}/v2/orders/${orderId}/confirmation`,
       {
         method: "POST",
         headers: {
@@ -215,8 +229,13 @@ export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
         },
       },
     );
-    console.log(`[printful] Order ${orderResponse.data.id} confirmed for fulfillment`);
+    console.log(`[printful] Order ${orderId} confirmed for fulfillment`);
+  } catch (err: any) {
+    const msg = err?.data?.error?.message ?? err?.message ?? "";
+    if (msg.includes("already confirmed") || msg.includes("already in process")) {
+      console.log(`[printful] Order ${orderId} was already confirmed`);
+      return;
+    }
+    throw err;
   }
-
-  return orderResponse;
 }

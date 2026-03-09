@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import Stripe from "stripe";
 import { createPrintfulOrder } from "~~/server/utils/printful";
 import { getStripeClient } from "~~/server/utils/stripe";
@@ -89,7 +88,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const orderData = {
-    externalId: randomUUID().replace(/-/g, ""),
+    externalId: session.id, // Use Stripe session ID for strict idempotency
     imageUrl,
     variantId,
     productTypeId,
@@ -117,10 +116,19 @@ export default defineEventHandler(async (event) => {
       const result = await createPrintfulOrder(orderData);
       console.log("[webhook] Printful order created:", JSON.stringify(result, null, 2));
     } catch (err: any) {
+      const printfulErrorMsg = err?.data?.error?.message ?? err?.message ?? "";
+
+      // If the order already exists with this external ID, it means we already processed this webhook.
+      // We can just return success to Stripe so it stops retrying.
+      if (printfulErrorMsg.includes("already exists") || printfulErrorMsg.includes("external_id already exists")) {
+        console.log(`[webhook] Printful order for session ${session.id} already exists. Ignoring duplicate webhook.`);
+        return { received: true, note: "Duplicate order ignored" };
+      }
+
       console.error("[webhook] Printful API error:", err?.data ?? err?.message ?? err);
       throw createError({
         statusCode: 502,
-        statusMessage: `Printful order failed: ${err?.data?.error?.message ?? err?.message ?? "Unknown error"}`,
+        statusMessage: `Printful order failed: ${printfulErrorMsg || "Unknown error"}`,
       });
     }
   }
