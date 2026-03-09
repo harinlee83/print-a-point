@@ -136,6 +136,8 @@ export default defineEventHandler(async (event) => {
           const orderId = await getPrintfulOrderIdByExternalId(hashedId);
           if (orderId) {
             const fullOrder = await getPrintfulOrder(orderId);
+            console.log(`[webhook] Fetched full order:`, JSON.stringify(fullOrder, null, 2));
+
             const isCalculationDone =
               fullOrder?.costs?.calculation_status === "done" ||
               fullOrder?.retail_costs?.calculation_status === "done";
