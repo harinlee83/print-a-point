@@ -207,6 +207,31 @@ export async function createPrintfulOrder(input: CreatePrintfulOrderInput) {
   return orderResponse;
 }
 
+
+
+export async function getPrintfulOrderIdByExternalId(externalId: string): Promise<number | null> {
+  const config = useRuntimeConfig();
+  const printfulApiKey = process.env.NUXT_PRINTFUL_API_KEY || config.printfulApiKey;
+
+  if (!printfulApiKey) return null;
+
+  try {
+    const response = await $fetch<{ result: Array<{ id: number }> }>(
+      `${PRINTFUL_API_BASE}/v2/orders?external_id=${externalId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${printfulApiKey}`,
+        },
+      }
+    );
+    // API v2 returns result as the main wrapper for lists usually
+    return response.result?.[0]?.id ?? null;
+  } catch (err) {
+    console.error(`[printful] Failed to lookup order by externalId ${externalId}:`, err);
+    return null;
+  }
+}
+
 export async function confirmPrintfulOrder(orderId: number) {
   const config = useRuntimeConfig();
   const printfulApiKey =

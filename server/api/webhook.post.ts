@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import Stripe from "stripe";
-import { createPrintfulOrder } from "~~/server/utils/printful";
+import { createPrintfulOrder, confirmPrintfulOrder, getPrintfulOrderIdByExternalId } from "~~/server/utils/printful";
 import { getStripeClient } from "~~/server/utils/stripe";
 
 function assertString(value: unknown, fieldName: string): string {
@@ -124,8 +124,19 @@ export default defineEventHandler(async (event) => {
       // If the order already exists with this external ID, it means we already processed this webhook.
       // We can just return success to Stripe so it stops retrying.
       if (printfulErrorMsg.includes("already exists") || printfulErrorMsg.includes("external_id already exists")) {
-        console.log(`[webhook] Printful order for session ${session.id} already exists. Ignoring duplicate webhook.`);
-        return { received: true, note: "Duplicate order ignored" };
+        console.log(`[webhook] Printful order for session ${session.id} already exists. Attempting fallback confirmation...`);
+        
+        try {
+          const hashedId = createHash("md5").update(session.id).digest("hex");
+          const orderId = await getPrintfulOrderIdByExternalId(hashedId);
+          if (orderId) {
+            await confirmPrintfulOrder(orderId);
+            console.log(`[webhook] Fallback confirmation successful for order ${orderId}`);
+          }
+        } catch (confirmErr) {
+          console.error("[webhook] Fallback confirmation failed:", confirmErr);
+        }
+        return { received: true, note: "Duplicate order handled via fallback" };
       }
 
       console.error("[webhook] Printful API error:", err?.data ?? err?.message ?? err);
